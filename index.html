@@ -1,0 +1,2392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCM — Sistema de Controle de Manutenção</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0d1117;--surface:#161b27;--surface2:#1c2236;--surface3:#212840;
+  --border:#252d42;--border2:#2e3a56;
+  --accent:#f97316;--accent2:#fb923c;--accent-dim:rgba(249,115,22,.12);
+  --text:#dde3f0;--muted:#5a6a8a;--muted2:#7a8aaa;
+  --danger:#ef4444;--success:#22c55e;--warning:#f59e0b;--info:#3b82f6;--purple:#8b5cf6;
+  --r:10px;--r2:8px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Roboto Condensed',sans-serif;min-height:100vh;font-size:14px;}
+.hide{display:none!important;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ── LOGIN ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:var(--bg);position:relative;overflow:hidden;}
+#login-screen::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% -10%,rgba(249,115,22,.18),transparent);}
+#login-screen::after{content:'';position:absolute;bottom:-200px;left:50%;transform:translateX(-50%);
+  width:800px;height:400px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(249,115,22,.04),transparent);pointer-events:none;}
+.login-card{position:relative;z-index:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:18px;padding:48px 44px;width:420px;
+  box-shadow:0 40px 100px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03);}
+.login-brand{margin-bottom:32px;}
+.login-brand-icon{font-size:32px;margin-bottom:8px;}
+.login-brand-title{font-family:'Roboto Condensed',sans-serif;font-size:26px;font-weight:800;
+  color:var(--accent);letter-spacing:-1px;line-height:1;}
+.login-brand-sub{font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:.3px;}
+.form-field{margin-bottom:16px;}
+.form-field label{display:block;font-size:11px;font-weight:600;color:var(--muted);
+  letter-spacing:.6px;text-transform:uppercase;margin-bottom:7px;}
+.form-field input{width:100%;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:var(--r2);padding:11px 14px;color:var(--text);
+  font-family:'Roboto Condensed',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.form-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1);}
+#login-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--r2);
+  padding:13px;font-family:'Roboto Condensed',sans-serif;font-size:15px;font-weight:700;cursor:pointer;
+  margin-top:6px;transition:all .2s;letter-spacing:.3px;}
+#login-btn:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(249,115,22,.3);}
+#login-btn:active{transform:translateY(0);}
+#login-error{color:var(--danger);font-size:12px;text-align:center;margin-top:10px;
+  padding:8px;background:rgba(239,68,68,.08);border-radius:6px;}
+.demo-box{margin-top:24px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:16px;}
+.demo-title{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:12px;}
+.demo-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.demo-info{font-size:12px;color:var(--muted2);}
+.demo-info strong{color:var(--text);}
+.demo-btns{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
+.demo-btn{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;
+  cursor:pointer;border:1px solid;transition:all .15s;}
+
+/* ── APP SHELL ── */
+#app{display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;}
+.sidebar-brand{padding:22px 18px 18px;border-bottom:1px solid var(--border);}
+.brand-icon{font-size:24px;}
+.brand-title{font-family:'Roboto Condensed',sans-serif;font-size:18px;font-weight:800;
+  color:var(--accent);letter-spacing:-0.5px;margin-top:4px;}
+.brand-sub{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.3px;}
+.sidebar-nav{flex:1;padding:14px 10px;overflow-y:auto;}
+.nav-section{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.8px;padding:0 8px;margin:14px 0 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;
+  cursor:pointer;color:var(--muted2);transition:all .15s;margin-bottom:2px;
+  font-size:13px;font-weight:500;user-select:none;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--accent-dim);color:var(--accent);}
+.nav-item .ni{font-size:15px;width:18px;text-align:center;flex-shrink:0;}
+.sidebar-footer{padding:14px;border-top:1px solid var(--border);}
+.user-block{background:var(--surface2);border-radius:8px;padding:12px;}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-dim);
+  border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:var(--accent);font-family:'Roboto Condensed',sans-serif;
+  flex-shrink:0;}
+.user-info{flex:1;min-width:0;}
+.user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-role-label{font-size:11px;color:var(--muted);text-transform:capitalize;margin-top:1px;}
+.user-row{display:flex;align-items:center;gap:10px;}
+.logout-btn{width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);
+  border-radius:6px;padding:7px;font-size:12px;cursor:pointer;margin-top:10px;transition:all .15s;
+  font-family:'Roboto Condensed',sans-serif;}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{padding:18px 28px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);flex-shrink:0;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.topbar-title{font-family:'Roboto Condensed',sans-serif;font-size:20px;font-weight:700;}
+.topbar-meta{font-size:11px;color:var(--muted);background:var(--surface2);
+  padding:4px 10px;border-radius:20px;border:1px solid var(--border);}
+.page-content{padding:24px 28px;overflow-y:auto;flex:1;}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;gap:14px;margin-bottom:22px;}
+.kpi-grid-6{grid-template-columns:repeat(6,1fr);}
+.kpi-grid-5{grid-template-columns:repeat(5,1fr);}
+.kpi-grid-4{grid-template-columns:repeat(4,1fr);}
+.kpi-grid-3{grid-template-columns:repeat(3,1fr);}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 16px;position:relative;overflow:hidden;transition:border-color .2s;}
+.kpi-card:hover{border-color:var(--border2);}
+.kpi-card-accent{position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi-icon{font-size:20px;margin-bottom:8px;}
+.kpi-val{font-family:'Roboto Condensed',sans-serif;font-size:26px;font-weight:800;line-height:1;}
+.kpi-label{font-size:10px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
+.kpi-meta{font-size:10px;color:var(--muted);margin-top:6px;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.card-title{font-family:'Roboto Condensed',sans-serif;font-size:15px;font-weight:700;}
+.card-body{padding:20px;}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;overflow-y:auto;}
+/* Sticky header — sem vão, sem elemento extra */
+.table-wrap thead th{
+  position:sticky;top:0;z-index:2;
+  background:var(--surface2);
+  box-shadow:0 1px 0 var(--border);
+}
+/* Scrollbar única embaixo */
+.table-wrap::-webkit-scrollbar{height:6px;width:6px;}
+.table-wrap::-webkit-scrollbar-track{background:var(--surface2);}
+.table-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.table-wrap::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+/* Scrollbar espelho no topo via scroll-snap — usamos JS leve */
+.dual-scroll-wrap{display:contents;}
+.dual-scroll-top{display:none;}
+.dual-scroll-top-inner{display:none;}
+.dual-scroll-body{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);
+  background:var(--surface2);white-space:nowrap;}
+td{padding:11px 14px;font-size:13px;font-family:'Roboto Condensed',sans-serif;border-bottom:1px solid rgba(37,45,66,.5);white-space:nowrap;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.018);}
+tfoot td{background:var(--surface2);font-weight:600;border-top:2px solid var(--border2);}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r2);
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:none;
+  font-family:'Roboto Condensed',sans-serif;white-space:nowrap;}
+.btn:hover{transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);box-shadow:0 6px 18px rgba(249,115,22,.25);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{box-shadow:0 6px 18px rgba(34,197,94,.25);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-sm{padding:5px 11px;font-size:12px;}
+
+/* ── INPUTS ── */
+.inp{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r2);
+  padding:9px 13px;color:var(--text);font-family:'Roboto Condensed',sans-serif;font-size:13px;
+  outline:none;transition:border-color .2s,box-shadow .2s;}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.08);}
+.inp-sm{padding:7px 11px;font-size:12px;}
+select.inp{cursor:pointer;}
+textarea.inp{resize:vertical;min-height:76px;line-height:1.5;}
+.inp-full{width:100%;}
+
+/* ── CONTROLS ROW ── */
+.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);
+  display:flex;align-items:center;justify-content:center;z-index:200;
+  backdrop-filter:blur(5px);}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px 32px;width:720px;max-width:96vw;max-height:90vh;overflow-y:auto;
+  box-shadow:0 40px 100px rgba(0,0,0,.6);}
+.modal-sm{width:500px;}
+.modal-title{font-family:'Roboto Condensed',sans-serif;font-size:19px;font-weight:700;margin-bottom:6px;}
+.modal-badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.fg{display:flex;flex-direction:column;gap:6px;}
+.fg.full{grid-column:1/-1;}
+.fg label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;
+  padding-top:18px;border-top:1px solid var(--border);}
+
+/* ── DETAIL ROW ── */
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;
+  padding:9px 0;border-bottom:1px solid rgba(37,45,66,.6);font-size:13px;gap:12px;}
+.detail-row:last-child{border-bottom:none;}
+.detail-label{color:var(--muted);font-size:12px;flex-shrink:0;}
+.detail-val{font-weight:500;text-align:right;}
+.detail-box{background:var(--surface2);border-radius:8px;padding:12px 14px;margin-top:8px;
+  font-size:13px;line-height:1.6;border-left:3px solid var(--border2);}
+.detail-box-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:5px;}
+
+/* ── OK BLOCK ── */
+.ok-block{margin-top:18px;padding:14px 16px;background:rgba(34,197,94,.07);
+  border:1px solid rgba(34,197,94,.2);border-radius:10px;}
+.ok-block.done{background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.15);}
+.ok-block-title{font-size:13px;font-weight:600;color:var(--success);margin-bottom:6px;}
+.ok-block-sub{font-size:12px;color:var(--muted);margin-bottom:12px;}
+
+/* ── COMMENTS ── */
+.comments-section{margin-top:22px;padding-top:18px;border-top:1px solid var(--border);}
+.comments-title{font-family:'Roboto Condensed',sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;}
+.comment{background:var(--surface2);border-radius:8px;padding:11px 13px;margin-bottom:8px;
+  border-left:3px solid var(--accent);}
+.comment-meta{font-size:11px;color:var(--muted);margin-bottom:3px;}
+.comment-text{font-size:13px;line-height:1.5;}
+.comment-input-row{display:flex;gap:8px;margin-top:10px;}
+
+/* ── PROGRESS ── */
+.progress-bar{background:var(--surface2);border-radius:4px;height:7px;overflow:hidden;margin-top:5px;}
+.progress-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .4s ease;}
+
+/* ── TIPO BAR ── */
+.tipo-bar-row{margin-bottom:13px;}
+.tipo-bar-header{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;}
+
+/* ── PLANO TABLE CELL ── */
+.pm-cell{text-align:center;font-size:15px;}
+
+/* ── ALERT ── */
+.alert{padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;}
+.alert-warning{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#f59e0b;}
+.alert-danger{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#ef4444;}
+.alert-info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:#3b82f6;}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:52px 20px;color:var(--muted);}
+.empty-icon{font-size:40px;margin-bottom:10px;}
+.empty-text{font-size:14px;}
+
+/* ── NUMBER TYPOGRAPHY STANDARDS ──
+   Big KPI values       → .kpi-val  (Syne 26px 800)
+   Table number cells   → .num      (Syne 13px 700)
+   Table money cells    → .money    (Syne 13px 700)
+   Table code/id cells  → .code     (Roboto Condensed 13px 600)
+*/
+.num{font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:13px;}
+.money{font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:13px;}
+.code{font-family:'Roboto Condensed',sans-serif;font-weight:600;font-size:13px;letter-spacing:.2px;}
+td.num,td.money{text-align:right;}
+
+/* ── ESTOQUE TABLE ── */
+.est-cod{font-family:'Roboto Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.2px;}
+.est-desc{font-family:'Roboto Condensed',sans-serif;font-size:13px;font-weight:500;color:var(--text);max-width:220px;white-space:normal;}
+.est-text{font-family:'Roboto Condensed',sans-serif;font-size:13px;font-weight:400;color:var(--text);}
+.est-muted{font-family:'Roboto Condensed',sans-serif;font-size:13px;font-weight:400;color:var(--muted);}
+.est-num{font-family:'Roboto Condensed',sans-serif;font-size:15px;font-weight:800;color:var(--text);text-align:center;}
+.est-num-sm{font-family:'Roboto Condensed',sans-serif;font-size:13px;font-weight:600;text-align:center;}
+.est-money{font-family:'Roboto Condensed',sans-serif;font-size:13px;font-weight:600;color:var(--text);text-align:right;}
+.est-bold{font-weight:800;color:var(--accent2);}
+.est-alerta{color:#ef4444!important;}
+.est-actions{display:flex;gap:6px;align-items:center;}
+.est-row-alerta{background:rgba(239,68,68,.04);}
+.est-row-alerta:hover td{background:rgba(239,68,68,.07)!important;}
+.est-tag-min{display:inline-flex;align-items:center;margin-left:6px;padding:1px 7px;
+  border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px;
+  background:rgba(239,68,68,.15);color:#ef4444;vertical-align:middle;}
+
+/* ── ROLE COLORS ── */
+.role-administrador{background:rgba(239,68,68,.12);color:#ef4444;}
+.role-lider{background:rgba(249,115,22,.12);color:#f97316;}
+.role-tecnico{background:rgba(59,130,246,.12);color:#3b82f6;}
+.role-auxiliar{background:rgba(139,92,246,.12);color:#8b5cf6;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{width:56px;}
+  .brand-title,.brand-sub,.nav-item span,.user-name,.user-role-label,.logout-btn{display:none!important;}
+  .nav-item{justify-content:center;padding:10px;}
+  .user-block{padding:8px;display:flex;justify-content:center;}
+  .user-row{flex-direction:column;gap:0;}
+  .user-avatar{margin:0 auto;}
+  .page-content{padding:16px;}
+  .kpi-grid-6{grid-template-columns:repeat(3,1fr);}
+  .kpi-grid-5{grid-template-columns:repeat(3,1fr);}
+  .modal{padding:20px;}
+  .form-grid{grid-template-columns:1fr;}
+  .fg.full{grid-column:auto;}
+}
+
+#confirm-overlay.show{display:flex!important;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <img src="data:image/png;base64,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bD/x6Vyf9QSsaym0ZQE48ySsmx8ekQt/5laOGj9JC7fi40tY/wAR876j6v8AD4vO83OefPjy5Z7znOV2L7p3T9/MJvtitd18jl5P1tJHN5fLGePMHGcDOPsFsvqMHbXPt2gsfjBX7u+yUc8mdNqduBuL4O6CwRVbaGsnr6itpZ5GksEsdTI0cgOy0tBbn4znBxhePt5sLvhp+Sps9Jrmh05Za2QGtfb6ySR7+sF0bfLaQ/HWeTD0OzgLV9toKG2UMVDbaOnoqSIYjgp4mxxsGc4DWgAdkldhUPqNqc1HGJNvdZwWe7x2b5RlLSfhYv1i3DtN8GpbZNbLbd4axkTo3mZ8UUwe1p6DeRDQD8ZXsbHeHTUWhNzLbq28ahtdfHRMmJZAyQPe+SJ0efUMfvkrSqLE+paiaab5WOAtNXFppcBZl0D4cNSWLd6h1pctRWiqpqe5S10kUUcnmPLuZAGegeTgff4WmkWvTqbKVJQfOzLJ1xm035BERUEwo7rXQ+ltYwNi1DaIatzBiOYEslYPsHtIdj9M4/RSJFGUYzWJLKLqNRbp7FZTJxkuGnh/dFSx+Hzb5sjObbtLCw5EDqvDP9mg/wC6lVftjoWt01Dp2XT1Oy3QyebGyJzo3h+MFxe0hxJHRJJz8qYIqo6amOcRR0LuvdTucXO+bcd14ns/X5/Ereh2j2x0tUDUTLMKf8NBqjLNVzSMi4DlzLXOIPHGewcYyonqu0baaq03c9wLto/UFogpYmVn1ccbYH1sb/yysaHlriejlwa7sZ9wrtuNHTXG31NvrIhLTVMToZoz7PY4EOH9QSobHtzG7RNz0jXaovtwttZTspYfqHRGSkiZ7NY5rByPtkv5HofZZ92p7e3tWPkR/fOpe1V3vE+5LGe55x6c8fAr626d2k0Va7RrC6WO7ObX1300T7i9lQadw5nzJGxuMfECMu5eoj36wcc+q9NbRV9NqbVtVpC7VgtdwkhuP0czm5cGNkfK1olDeGHgk9fJwrCi0BbzZLDaquuqKqKzVxrIyaeCMTEiRvB7I42s44lPs0E47J7zwWnbKyWvRGoNIUdXcG2+9OmLy6QPkp2yRtj4MJHs1rQByyfuSnu1OO3sWPkSfXupu32vvE+7GM9z49OeCEXa2bX23QljtlToS7/S3uoknpaQyMbVB7GHLnSOmGAWDocyCCBj4Xnak0ZstpzUsNmrtJXoSOippZKmKqlMUAqJXRRh580OyXtI9LT7hWZrTbyh1NQWSmkudXRvswIppY4YJeWY+GXMmjew9d/l6Pa+aj24tV71hSasmrauG60UdOyllY2MiLyXyOyAWn84kc1w+2MYIBR6ah8wX2MQ691SvPbqJrLy/FLn7kttlDSW2309voKdlPS00bYoYmDDWNAwAF2ERXJYOXKTk228thERDAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAf//Z" alt="Zaffari Stok Center" style="height:52px;object-fit:contain;display:block;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+        <span style="font-size:22px">⚙️</span>
+        <div class="login-brand-title">PCM</div>
+      </div>
+      <div class="login-brand-sub">Planejamento e Controle de Manutenção</div>
+    </div>
+    <div class="form-field">
+      <label>Domínio</label>
+      <input type="text" id="inp-domain" placeholder="Digite o domínio de acesso" autocomplete="off">
+    </div>
+    <div class="form-field">
+      <label>Usuário</label>
+      <input type="text" id="inp-user" placeholder="Digite seu usuário" autocomplete="username">
+    </div>
+    <div class="form-field">
+      <label>Senha</label>
+      <input type="password" id="inp-pass" placeholder="Digite sua senha" autocomplete="current-password">
+    </div>
+    <div id="login-error" class="hide"></div>
+    <button id="login-btn" onclick="doLogin()">Entrar no Sistema</button>
+    <div class="demo-box">
+      <div class="demo-title">Acessos de demonstração</div>
+      <div class="demo-row"><span class="demo-info"><strong>Luan Aresi</strong> (Admin) — admin / admin123</span><span class="badge role-administrador">Admin</span></div>
+      <div class="demo-row"><span class="demo-info"><strong>Líder</strong> — lider / lider123</span><span class="badge role-lider">Líder</span></div>
+      <div class="demo-row"><span class="demo-info"><strong>Técnico</strong> — carlos / tec123</span><span class="badge role-tecnico">Técnico</span></div>
+      <div class="demo-row"><span class="demo-info"><strong>Auxiliar</strong> — pedro / aux123</span><span class="badge role-auxiliar">Auxiliar</span></div>
+      <div class="demo-btns">
+        <button class="demo-btn" style="background:rgba(239,68,68,.12);color:#ef4444;border-color:#ef4444;" onclick="quickLogin('admin','admin123')">Admin</button>
+        <button class="demo-btn" style="background:rgba(249,115,22,.12);color:#f97316;border-color:#f97316;" onclick="quickLogin('lider','lider123')">Líder</button>
+        <button class="demo-btn" style="background:rgba(59,130,246,.12);color:#3b82f6;border-color:#3b82f6;" onclick="quickLogin('carlos','tec123')">Técnico</button>
+        <button class="demo-btn" style="background:rgba(139,92,246,.12);color:#8b5cf6;border-color:#8b5cf6;" onclick="quickLogin('pedro','aux123')">Auxiliar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP ═══════════════════ -->
+<div id="app" class="hide">
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACoASwDASIAAhEBAxEB/8QAHQABAAMAAwEBAQAAAAAAAAAAAAYHCAMEBQEJAv/EADgQAAEDAwQABQIDBgUFAAAAAAEAAgMEBREGBxIhCBMiMUEUURUyYSNCUnGBkRYzcqHCCRiSsbL/xAAbAQEAAgMBAQAAAAAAAAAAAAAAAgMBBAUGB//EADARAAICAQMCAwcEAgMAAAAAAAABAgMRBCExBRIiQVETFGFxgZGhBhUy8DPxI1JT/9oADAMBAAIRAxEAPwDZaIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiqzxJ7i3Xb7R9M7T9NDJd7nOYIZ6jHk0jGtLnzPz0cekAHrLh744nMY9zwC00X5u1mttXXS9sqWaw1bfL05/JklNWywRsd1/lsb3jP2bGP0Vi1+6fiOorRFXT3AQ09NAPNLKKkke4NHcj24c7J9zxx89BX21VVSjCy2MXLhSfa38k9/ukIKyacoQckucLOPqtvybdRQHw/ap1FrTam06k1RRw01fV+YQYo3RtmiD3BkoYSSOTQD74P5h0QBPlTODhJxfkYTyshERRMhERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBYc3u1rU7kb//AOFbhUtorHYq2elhpJQz1PiDhJK4OBy55bhuegzGBkknZmq73TWW3Oc+draudrmUkeMmSTHXX2yW5JwBkZPYVS7t6k1E/TNvksFhfc9QU1UTLB9GCyraInNyX82GIkOLuIDnekjHEh6hO9KM6Y475Rajvw35ltcPFGyS8Kab+PwIFpTR9fS0baq0WuyUttqJxE2VodA+UnAD+Ia7k3kSORI9sgEEFSjS+j7hcrxFQahFDSUvmOFUyKZ0hMQGfdzGtw7kxpIJwXkDsZXkje2wwQ01sv1NV6QvzGsMtvu1sl4g5weL2+kMy1wDj9uwCCFLtNXGPU+lPxq0U9JXWy8Ojj81zeBq3R1LY3CMSEklpa5pLuPIBpb+ULyNPQZK5Waittrzed2vjw8noLurP2bhVNJPyWNs/nYu1jGxsaxjWtY0Ya0DAA+wX1RnRWn7lZ5ayouF2qqo1XHFO+rkqI4SM5LXSd5OfgAD27wCu/dfxM3OMQMqHU/lDyzE5gaJeR/zcnkW44/lz+9n4Xq5WuMFJxfyPPRrUpduUeuihxbqtpglp21xbEI5J46h8PKZ4DubGlpwGu6H88YwMr+aaDVrHPinnq5X82tbIPLDC3zcOdnOR6Dn8pPQ+Vq+/vOPZy+xs+5r/wBI/cmaKKU3+JGxYqY650/KEsLHxcGsPDzGu7yXg+YM+2A3HeVyU8mpqephkqqeWoifUCd7IXRksY6OQGHsj8rvLOfnPv7qa1uceCW/wIvSYz419yToqe8RO91NtaaK10VrbdL3XRGdkUkvCKCIO483kZJyQ4AD34uyRjuNbdeILUVdYbpqDW2gqm12GitkldDdqZkohqniSONkEfmN4lz3SYB5/un9SOxHRXSrViWzOe7oKXbnc0MiyhpzxP6/1Bepo7Htc2700WHvpqF88s0TCcAue1hA/mWALV6hqNLZp2lYufiZrtjZ/EIiLXLAiKktzvEno7QOtLjpW5WW/VdVb/L86WlZAYzzjbIAOUjT0HD491bTRZdLtrWWRlNR3bLtRfI3c42vwRyAOD7hfVUSC8XWOqrDpG1G53+4R0kBPFgILnyO/ha0duP8vb3K9pUrZLbBr3f/AFJWX1jaug0u2GnoaSTuMSOyeZaeieTHn/x/hCovslDCjy9jq9K0VWodluobVdce6WOXukkvi21v5cnbG/NpkHn02jNXVFDkYqmUTSwt+4PLGP6qYaG3J0drKJ5s12j8+NvKSmqB5UrB98H3HY7aSP1Uc3F3mteidXjT1XYrhU8IWSvmjcxvTvbg1xHLHz2O+lTuq6m1bnb1UL7TZZqiyPlpYKp0FI5j3sc4eZLKWjLT6i3k72DFpT1UqpYU1J5xjGP7+T1ml/T1Gvq9pPTyoh29yn3KSa9Gmlu/LeJq6GrpZn8IamGR38LZASuZZ13Y25sW3jLBqXRdmuTamlujJap8EkszmQMaXuzkkNBxgk4HffSlh3zornJHT6Q0fqDUFT5bXzMjh4NgJH5XEB3Y77xxPwStiOrUZONuzX1z+DiWfpyd9UL+nt2QlnLaUe1p+fiaWfLLLeVPN3c1TdLlc49KbbVN6oKGsfRmpFeIyXs98t4HH39z0R/Jc9JvVHQ11PS620de9LtqHcY6meMvhz+p4tP9gf1wFxeF57JbLqyWJ7XxyakqHsc05DmlkZBB+xBUZ3+1nGFcsc59fyi/T9IfT9LdqddQpY7e3Lfa8tp4cJLOPnsSvanXT9bUlzbV2eS0XG11RpaumdL5ga7v2dgd5BBGOiFNFnDQuv7bojU+uYp6CvudwuGpJW0tFRR85XgPly7B+PjAySfj3IltXvtHQwGpuO3ur6OlaQHzTUgY1uTj3cQM/YZ7SnWQUF7SW5Lqn6Y1ctXL3On/AI3jG680m8dzy1nK8y4kXBbquCvt9PXUr+cFTE2aJ2MZa4Ag/wBiudbyeTyMouLw+QiIhgIiIAiIgPD1Hpa0X+spqm5RzSOp2OY1rZS1pDiCcj+g9sf7DER16202QXKPT76Om1HS2Sa5U8NVTSPgf5WeEj3jALvMcASSXH3xkAiylj7emStg8VVXbHV9Xc4bpb4zFR+rhTHyRhgb3y7hL8tGcy9ZIKpuThXO2EO6UU3jHONy6hKdkYTlhN4+55E+r9w7lXVkWs9u9J6rpHVLpqWO5+S19KXvJIicHkhhz23+XZJJN57V6u0pDp63u1LQUljvETjGaSCmlNFRNYS2LynYMbGiPjlwI7L84yQofpbTdRqmO4yURkkFBSPm5w4cJJ24LIDkfverOOxgZ9xmt9X7g0Fk1DQ2gxmWKdrXVdQwh308biRyDf3i0AuLesgDvteYo611nVutV0Rfcm0llbR5e8tjv3dM6bSp99rXa16PnjhG3VSu+Nq36r9YQS7ZX2lt9kbQsbJG90Acajm/k79pG444lg98dKsfB9r3cXV26NfT3a91twssdvkmqIZQDFTuL2NhDOvQenAAe4DickZV0+ITdm37YaX5ReTVahrWubbqNxyAfmWQA58tv9C44Ax2R7yFFtGoVaSlJ+XK3PKOyM6+7OEZo3I3B8QG393htGotwYhXSxeaYKWOjmdG3PRfiH057x98FW74d9W7s3Ha3V+tdTS1d9DKQyaegko4w6pkjjlLuLIWNc5rneW0fficfc1L4e9p7xu3quo1trWWqnsf1JlqZ5iRJdJwe42n4jBGHEdADg3HZZofxGbpxbR6Qt9NZLfSyXWv5QW2nc3jBBHG1vJ5a3GWtDmNDRjtw9gCujq3BuOmrhFzfOEl8f78DXqct7JNqPkVpcKXxd3WgkvP19JawIzK220/0jZPYni0Fj+/0dJn7rwtit/9xLtqAaPvMsN5q7lBPFbamWBkM0NU2J7ow/iGtcwubxIIBGc5wCF6ej9P73bg6Gfr687vVenKCSOSpp4oIy3MLM5e4ROjaxvpOM8iR2VUnhTgfX+IHSTntc7jLUTyZOcYpZjkn/Vj+qtjXXOqxTUW4ryWMPfz8yDlJTjhvf1PK30qtfza5e3c18Zv9NRRRO4eThsPqewfsvT7vcfv2pjuUzfO1bOW+16xjp6fRobSU1NG36XlhgDoW+j19BgJz9u14niymluO/wBquKLLnB9PTRj9RTRDH9yVfXjzeKfa/TNvZnj+NMcD+jKaZv8AzCvdv+CPavFvxxsnt6Fah/keXsVN4WaLdoVs9dt6ymZZp7lTU96mkFPngw8iP2nq6ZK4+n+L7qz7hN4qdYVdXX2Z1Hpa1ee/6OCWOGGSSIOPAkSNkkBIxnlx7+AF5Ph11dTbY+GDUGsqmlNXNLfJG0tPy4+dIY4Y2NJ+GgtcSfgA4BXW2yqN8d9G3O9M3E/wtZ6Wo+nAoafgPN4teWMa0h5Aa5pLnyH8wxnvGte5StnY4xUU8Zaz/strwoRim8vfBHtL7/bp6H186y7gVn4pTU1YKe5U1TTxNlgbkBz43xNGSAeQzyDh7Yzke5W75bif9w0ml4L7TR2CLU/0MkRo4cMpWVHCXLy3l0xryTnpUrXUNXNvX+D3C8S32qGoo6Ca4S5LqpzahsReckk5x9z18rsW6y1OvN9ZrLTTugfe7/UiSWN3bInyyPlcPuRHzOPY+x91ty0tH8nFfx322+eClW2cZ8y19W7vb3bg19yu+19tvNLpmgc5sBobc2V8wB6c9z2kueffy2flBAIPufM3E3O1i7e+qsEb7LIwXKloSZ7JSyycsRRvBe5hcfVy+evYYwtn6es9t0/ZKOy2ikjpKCiibDBCwdNaP/Z+ST2SSSsBU4ffPFa08uQm1yXZ9/Qyuz/8tWjorKrnLEElFP5/X7F9ylBLMuWfoWiIvPm+Fn7cG/jafeeovtE+G4UuoaZklwt3mcZYy08Q8HGBn1Fufc8x10RoFZ821qtPV242rm7kOhh1LXyOpWUdwaGwil+GRud0SQG4+4aCM5K0tY34Yp4edn6f74PVfpiMYrUXWxc61DEoLmSbX2UWu5vywvUndg19tvuS6OyzxQT1UrSWUFzpByJxkhpOWkgAn0knrKj1fZ6XajcizVGmKCP8N1TUx26ohlkcRSv5g8oz74Ic70noceujge5pvZ3RGl9TRappaqvb9KXSQRVFU0wQkgjlnjyOATjk4+/8lBNztf2nUu7ejbVZ6uOe3Wq7QyT1Qd+yfK6Ro9LvYhoB9XseR+ypslKMFK3CnlYx/fmdTQU036uVPTXOWmcJOalwnhtcfHtx5582slh786gr7RpyhtFBTwSyaiq/wcvlJ/ZCZjm8xg9kZ9k1bdbNs1trTttFqZMGytpqeHnw86VwJc+R2Cc4a4k476HXxE/FNdIn2LTU1orKeorKe8slhbC8SEPbG8t6acn1YUkgr9G72aGbbZ6s09UCyWWmjka2ppJm5GQCDkfmGcEEE/PtKVjlbOMX4sLBq0aONXT9JdfBujvk7MZ8nhN/TKX182cu2Wr7du1pG50l6skMZieIKumL/Mje1wy17SQCPY/qCOiup4d7IdN0mrrH5plbR6gkijefdzPJi4k/rxxn9V2LZTaH2R0lVCa5yOfO8yu8+RrqmqeBgNY1oHQ/lgZJJ9yvH8OGpo7padT3e71dLTVNffZKgxvla3iHRRYaM4yAOs/OEhLFlasfj3yZ1FTno9ZZootaZuPannnK4z9fxk9TQWgKHSd91JrvUD2Gsnq6uohJHJtJTGR7uQx7vc3sn4HQ+cxmzwVm+Gpjd7l5lNoW1zltLQ88OrZR8yAHoYIJ+wPEe7iuXbLdWOLXd70fqOsYaV91qha6yR/pA85+IXH244/Kfb93+FdfVlMdsNTya30PU0dXY6pwF5s0VQ3ABP8AmRjPXuf9JP8ACTxr7q3BOP8ABPxLz+vqjoRp1sNXZG941E4r2Un/ABxjiP8A1k1sm+HlbN5L2iYyKNscbGsYwBrWtGA0D2AC/pdDT12or9Y6K8257n0lZC2aIubg8SM9j4K766iaayj57ZCUJOM1hrn5hERZIBERAEREAVW7o7KWHXevLHrKW511suVskh8w04aRUMik8xgOfyuDifWPg4wcDFpIpwslW8xeDDSfIHXssz+J3ZncHXeoKC9WKe1VbmyPpPKaxtO6Gmc4OY58jieQa4yZDRn1ZAOcDTCJXN1yUkGsrBENpNv7Jtxo6lsNop4vNDGurqsNIfWT8QHyuySeznDc4aOh0FSG8Phx1frncm8aph1Ta46etez6eKpErnwxtY1oZ0CAMgnA69R+5WnkV1Ortpm5xe7ITqjOPa+DKlD4fd6KCihoqDd2akpYGBkMEFxrI442j2a1rSAB+gXoaz8O+tdR7b2uguetY7xqe11tTLFUV880kUkEwjBiMjuT2kGIOBwR24Y7yNNorv3K/KltlfBEPd4YwZQ0lsHvHNpeXSV/19Da9MiOThbqOpfN5jnZIYSWN4xlxy4ZcD36cnKkOwfh6v23u41Pqi73y110MFNNEyKmZIH83gNz6hjGOX91o5FifUb5qUdknzhBaeCafofnjruVl98UdfFkkVGr2UffZPGpbD/x6Vyf9QSsaym0ZQE48ySsmx8ekQt/5laOGj9JC7fi40tY/wAR876j6v8AD4vO83OefPjy5Z7znOV2L7p3T9/MJvtitd18jl5P1tJHN5fLGePMHGcDOPsFsvqMHbXPt2gsfjBX7u+yUc8mdNqduBuL4O6CwRVbaGsnr6itpZ5GksEsdTI0cgOy0tBbn4znBxhePt5sLvhp+Sps9Jrmh05Za2QGtfb6ySR7+sF0bfLaQ/HWeTD0OzgLV9toKG2UMVDbaOnoqSIYjgp4mxxsGc4DWgAdkldhUPqNqc1HGJNvdZwWe7x2b5RlLSfhYv1i3DtN8GpbZNbLbd4axkTo3mZ8UUwe1p6DeRDQD8ZXsbHeHTUWhNzLbq28ahtdfHRMmJZAyQPe+SJ0efUMfvkrSqLE+paiaab5WOAtNXFppcBZl0D4cNSWLd6h1pctRWiqpqe5S10kUUcnmPLuZAGegeTgff4WmkWvTqbKVJQfOzLJ1xm035BERUEwo7rXQ+ltYwNi1DaIatzBiOYEslYPsHtIdj9M4/RSJFGUYzWJLKLqNRbp7FZTJxkuGnh/dFSx+Hzb5sjObbtLCw5EDqvDP9mg/wC6lVftjoWt01Dp2XT1Oy3QyebGyJzo3h+MFxe0hxJHRJJz8qYIqo6amOcRR0LuvdTucXO+bcd14ns/X5/Ereh2j2x0tUDUTLMKf8NBqjLNVzSMi4DlzLXOIPHGewcYyonqu0baaq03c9wLto/UFogpYmVn1ccbYH1sb/yysaHlriejlwa7sZ9wrtuNHTXG31NvrIhLTVMToZoz7PY4EOH9QSobHtzG7RNz0jXaovtwttZTspYfqHRGSkiZ7NY5rByPtkv5HofZZ92p7e3tWPkR/fOpe1V3vE+5LGe55x6c8fAr626d2k0Va7RrC6WO7ObX1300T7i9lQadw5nzJGxuMfECMu5eoj36wcc+q9NbRV9NqbVtVpC7VgtdwkhuP0czm5cGNkfK1olDeGHgk9fJwrCi0BbzZLDaquuqKqKzVxrIyaeCMTEiRvB7I42s44lPs0E47J7zwWnbKyWvRGoNIUdXcG2+9OmLy6QPkp2yRtj4MJHs1rQByyfuSnu1OO3sWPkSfXupu32vvE+7GM9z49OeCEXa2bX23QljtlToS7/S3uoknpaQyMbVB7GHLnSOmGAWDocyCCBj4Xnak0ZstpzUsNmrtJXoSOippZKmKqlMUAqJXRRh580OyXtI9LT7hWZrTbyh1NQWSmkudXRvswIppY4YJeWY+GXMmjew9d/l6Pa+aj24tV71hSasmrauG60UdOyllY2MiLyXyOyAWn84kc1w+2MYIBR6ah8wX2MQ691SvPbqJrLy/FLn7kttlDSW2309voKdlPS00bYoYmDDWNAwAF2ERXJYOXKTk228thERDAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAf//Z" alt="Zaffari Stok Center" style="height:32px;object-fit:contain;display:block;margin-bottom:6px;max-width:100%;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="brand-icon">⚙️</span>
+        <div class="brand-title">PCM</div>
+      </div>
+      <div class="brand-sub">Controle de Manutenção</div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-block">
+        <div class="user-row">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div class="user-info">
+            <div class="user-name" id="user-name-label">—</div>
+            <div class="user-role-label" id="user-role-label">—</div>
+          </div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">↩ Sair do Sistema</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="sync-indicator" style="display:none;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid;transition:all .3s"></div>
+        <div class="topbar-meta">Unidade Industrial · PCM 2025</div>
+      </div>
+    </div>
+    <div class="page-content" id="page-content"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL ═══════════════════ -->
+<div class="modal-overlay hide" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal-box" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- Overlay de confirmação de exclusão -->
+<div id="confirm-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div onclick="event.stopPropagation()" style="background:#161b27;border:1.5px solid #ef4444;border-radius:16px;padding:36px 40px;width:420px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.6)">
+    <div style="font-size:40px;margin-bottom:16px">🗑️</div>
+    <div style="font-family:'Roboto Condensed',sans-serif;font-size:20px;font-weight:700;color:#e8eaf0;margin-bottom:10px">Confirmar Exclusão</div>
+    <div id="confirm-label" style="font-size:13px;color:#6b7a9b;margin-bottom:28px;line-height:1.5"></div>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button onclick="confirmDelete(false)" style="flex:1;padding:12px;border-radius:8px;font-family:'Roboto Condensed',sans-serif;font-size:15px;font-weight:700;cursor:pointer;background:#1c2236;border:1.5px solid #252d42;color:#dde3f0">Não, cancelar</button>
+      <button onclick="confirmDelete(true)" style="flex:1;padding:12px;border-radius:8px;font-family:'Roboto Condensed',sans-serif;font-size:15px;font-weight:700;cursor:pointer;background:#ef4444;border:none;color:#fff">Sim, apagar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════
+//  PERSISTÊNCIA — Google Sheets (banco compartilhado)
+// ══════════════════════════════════════════════
+
+const GS_URL = 'https://script.google.com/macros/s/AKfycby4MrbyPyKalGrZEwCuswpJh1VYay2ZzIV5X7yYYK6KtLVHOpfNcEknLPZWTSNbRS_a/exec';
+const SHEET_NAMES = {
+  OS_DATA:     'OS_DATA',
+  EQUIPAMENTOS:'EQUIPAMENTOS',
+  ESTOQUE:     'ESTOQUE',
+  PLANO_PREV:  'PLANO_PREV',
+  CUSTOS_DATA: 'CUSTOS_DATA',
+  USERS:       'USERS',
+};
+
+// Mostra/esconde indicador de sincronização
+function _syncIndicator(show, err){
+  let el = document.getElementById('sync-indicator');
+  if(!el) return;
+  el.style.display = show ? 'flex' : 'none';
+  el.style.background = err ? 'rgba(239,68,68,.15)' : 'rgba(34,197,94,.1)';
+  el.style.borderColor = err ? 'rgba(239,68,68,.4)' : 'rgba(34,197,94,.3)';
+  el.style.color = err ? '#ef4444' : '#22c55e';
+  el.textContent = err ? '⚠ Erro ao sincronizar' : '↻ Sincronizando…';
+}
+
+// Salva UMA aba no Google Sheets
+function saveSheet(sheetName, data){
+  return fetch(GS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body: JSON.stringify({sheet: sheetName, rows: data})
+  }).catch(()=>{});
+}
+
+// Salva todos os dados no Google Sheets
+function saveAll(){
+  // Salva local também como fallback
+  try{
+    localStorage.setItem('pcm_os',  JSON.stringify(OS_DATA));
+    localStorage.setItem('pcm_eq',  JSON.stringify(EQUIPAMENTOS));
+    localStorage.setItem('pcm_est', JSON.stringify(ESTOQUE));
+    localStorage.setItem('pcm_pm',  JSON.stringify(PLANO_PREV));
+    localStorage.setItem('pcm_cu',  JSON.stringify(CUSTOS_DATA));
+    localStorage.setItem('pcm_us',  JSON.stringify(USERS));
+  } catch(e){}
+
+  _syncIndicator(true, false);
+
+  // Envia cada aba para o Google Sheets em paralelo
+  Promise.all([
+    saveSheet(SHEET_NAMES.OS_DATA,     OS_DATA),
+    saveSheet(SHEET_NAMES.EQUIPAMENTOS,EQUIPAMENTOS),
+    saveSheet(SHEET_NAMES.ESTOQUE,     ESTOQUE),
+    saveSheet(SHEET_NAMES.PLANO_PREV,  PLANO_PREV),
+    saveSheet(SHEET_NAMES.CUSTOS_DATA, CUSTOS_DATA),
+    saveSheet(SHEET_NAMES.USERS,       USERS),
+  ]).then(()=>{
+    _syncIndicator(false, false);
+  }).catch(()=>{
+    _syncIndicator(true, true);
+    setTimeout(()=>_syncIndicator(false,false), 3000);
+  });
+}
+
+// Carrega todos os dados do Google Sheets
+function loadAll(){
+  return fetch(GS_URL + '?t=' + Date.now())
+    .then(r => r.json())
+    .then(d => {
+      // Parse string fields that are actually arrays/objects (from Sheets serialization)
+      function parseRow(row){
+        const r = {...row};
+        Object.keys(r).forEach(k=>{
+          const v = r[k];
+          if(typeof v === 'string' && (v.startsWith('[') || v.startsWith('{'))){
+            try{ r[k]=JSON.parse(v); } catch(e){}
+          }
+          // Convert numeric strings to numbers
+          if(typeof v === 'string' && v !== '' && !isNaN(v)) r[k] = Number(v);
+          // Convert boolean strings
+          if(v==='true') r[k]=true;
+          if(v==='false') r[k]=false;
+        });
+        return r;
+      }
+      if(d.OS_DATA     && d.OS_DATA.length)      OS_DATA.splice(0,OS_DATA.length,...d.OS_DATA.map(parseRow));
+      if(d.EQUIPAMENTOS&& d.EQUIPAMENTOS.length)  EQUIPAMENTOS.splice(0,EQUIPAMENTOS.length,...d.EQUIPAMENTOS.map(parseRow));
+      if(d.ESTOQUE     && d.ESTOQUE.length)       ESTOQUE.splice(0,ESTOQUE.length,...d.ESTOQUE.map(parseRow));
+      if(d.PLANO_PREV  && d.PLANO_PREV.length)    PLANO_PREV.splice(0,PLANO_PREV.length,...d.PLANO_PREV.map(parseRow));
+      if(d.CUSTOS_DATA && d.CUSTOS_DATA.length)   CUSTOS_DATA.splice(0,CUSTOS_DATA.length,...d.CUSTOS_DATA.map(parseRow));
+      if(d.USERS       && d.USERS.length)         USERS.splice(0,USERS.length,...d.USERS.map(parseRow));
+      // Salva localmente como fallback
+      try{
+        localStorage.setItem('pcm_os',  JSON.stringify(OS_DATA));
+        localStorage.setItem('pcm_eq',  JSON.stringify(EQUIPAMENTOS));
+        localStorage.setItem('pcm_est', JSON.stringify(ESTOQUE));
+        localStorage.setItem('pcm_pm',  JSON.stringify(PLANO_PREV));
+        localStorage.setItem('pcm_cu',  JSON.stringify(CUSTOS_DATA));
+        localStorage.setItem('pcm_us',  JSON.stringify(USERS));
+      } catch(e){}
+    })
+    .catch(()=>{
+      // Fallback: usa localStorage se Google Sheets falhar
+      try{
+        const os  = localStorage.getItem('pcm_os');
+        const eq  = localStorage.getItem('pcm_eq');
+        const est = localStorage.getItem('pcm_est');
+        const pm  = localStorage.getItem('pcm_pm');
+        const cu  = localStorage.getItem('pcm_cu');
+        const us  = localStorage.getItem('pcm_us');
+        if(os)  OS_DATA.splice(0,OS_DATA.length,...JSON.parse(os));
+        if(eq)  EQUIPAMENTOS.splice(0,EQUIPAMENTOS.length,...JSON.parse(eq));
+        if(est) ESTOQUE.splice(0,ESTOQUE.length,...JSON.parse(est));
+        if(pm)  PLANO_PREV.splice(0,PLANO_PREV.length,...JSON.parse(pm));
+        if(cu)  CUSTOS_DATA.splice(0,CUSTOS_DATA.length,...JSON.parse(cu));
+        if(us)  USERS.splice(0,USERS.length,...JSON.parse(us));
+      } catch(e){}
+    });
+}
+
+// ══════════════════════════════════════════════
+//  STATE & CONFIG
+// ══════════════════════════════════════════════
+
+let currentUser = null;
+let currentPage = 'dashboard';
+
+const ACCESS = {
+  administrador:['dashboard','os','equipamentos','preventivo','estoque','custos','indicadores','usuarios'],
+  lider:        ['dashboard','os','equipamentos','preventivo','estoque','custos','indicadores'],
+  tecnico:      ['dashboard','os','equipamentos','preventivo','estoque'],
+  auxiliar:     ['dashboard','os','equipamentos','preventivo','estoque'],
+};
+
+const NAV = [
+  {key:'dashboard',icon:'🖥️',label:'Dashboard'},
+  {key:'os',icon:'🔧',label:'Ordens de Serviço'},
+  {key:'equipamentos',icon:'⚙️',label:'Equipamentos'},
+  {key:'preventivo',icon:'📅',label:'Plano Preventivo'},
+  {key:'estoque',icon:'📦',label:'Estoque'},
+  {key:'custos',icon:'💰',label:'Custos'},
+  {key:'indicadores',icon:'📊',label:'Indicadores KPI'},
+  {key:'usuarios',icon:'👥',label:'Usuários'},
+];
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+
+const R = id => document.getElementById(id);
+const fmtR = v => 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function badge(txt, color){ return `<span class="badge" style="background:${color}22;color:${color}">${esc(txt)}</span>`; }
+
+function prioColor(p){ return {Alta:'#ef4444',Média:'#f59e0b',Baixa:'#22c55e',Planejada:'#3b82f6'}[p]||'#6b7a9b'; }
+function statusColor(s){ return {Concluída:'#22c55e','Em Andamento':'#3b82f6',Aguardando:'#f59e0b',Emergência:'#c026d3',Planejada:'#8b5cf6'}[s]||'#6b7a9b'; }
+function eqStatusColor(s){ return {Operando:'#22c55e',Parado:'#ef4444','Em Manutenção':'#f59e0b','Stand-by':'#3b82f6'}[s]||'#6b7a9b'; }
+function estColor(s){ return {OK:'#22c55e','Ponto de Pedido':'#f59e0b','Abaixo do Mínimo':'#ef4444'}[s]||'#6b7a9b'; }
+function critColor(c){ return {Alta:'#ef4444',Média:'#f59e0b',Baixa:'#22c55e'}[c]||'#6b7a9b'; }
+function roleName(r){ return {administrador:'Administrador',lider:'Líder',tecnico:'Técnico',auxiliar:'Auxiliar'}[r]||r; }
+
+const isAdmin = () => currentUser && (currentUser.role==='administrador'||currentUser.role==='lider');
+const isSuperAdmin = () => currentUser && currentUser.role==='administrador';
+
+// ══════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════
+
+function quickLogin(u,p){ R('inp-user').value=u; R('inp-pass').value=p; }
+
+function doLogin(){
+  const d = R('inp-domain').value.trim().toUpperCase();
+  const u = R('inp-user').value.trim();
+  const p = R('inp-pass').value.trim();
+  const err = R('login-error');
+  if(d !== 'PCM'){ err.textContent='Domínio inválido. Verifique e tente novamente.'; err.classList.remove('hide'); return; }
+
+  // Verifica credenciais primeiro nos dados locais, depois recarrega do Sheets
+  const btn = R('login-btn');
+  btn.textContent = 'Carregando...';
+  btn.disabled = true;
+  err.classList.add('hide');
+
+  loadAll().then(()=>{
+    btn.textContent = 'Entrar no Sistema';
+    btn.disabled = false;
+    const user = USERS.find(x=>x.username===u&&x.password===p);
+    if(!user){ err.textContent='Usuário ou senha inválidos.'; err.classList.remove('hide'); return; }
+    err.classList.add('hide');
+    currentUser = user;
+    R('login-screen').classList.add('hide');
+    R('app').classList.remove('hide');
+    buildSidebar();
+    updateUserBlock();
+    navigate('dashboard');
+    // Sincroniza a cada 30s
+    setInterval(()=>{
+      loadAll().then(()=>{ if(currentPage) renderPage(currentPage); });
+    }, 30000);
+  }).catch(()=>{
+    btn.textContent = 'Entrar no Sistema';
+    btn.disabled = false;
+    const user = USERS.find(x=>x.username===u&&x.password===p);
+    if(!user){ err.textContent='Usuário ou senha inválidos.'; err.classList.remove('hide'); return; }
+    currentUser = user;
+    R('login-screen').classList.add('hide');
+    R('app').classList.remove('hide');
+    buildSidebar();
+    updateUserBlock();
+    navigate('dashboard');
+  });
+}
+
+function doLogout(){
+  currentUser = null;
+  R('app').classList.add('hide');
+  R('login-screen').classList.remove('hide');
+  R('inp-domain').value=''; R('inp-user').value=''; R('inp-pass').value='';
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Enter' && !R('login-screen').classList.contains('hide')) doLogin();
+});
+
+// ══════════════════════════════════════════════
+//  SIDEBAR / NAVIGATION
+// ══════════════════════════════════════════════
+
+function buildSidebar(){
+  const allowed = ACCESS[currentUser.role]||[];
+  const nav = R('sidebar-nav');
+  nav.innerHTML = '';
+  NAV.filter(n=>allowed.includes(n.key)).forEach(n=>{
+    const el = document.createElement('div');
+    el.className = 'nav-item' + (n.key===currentPage?' active':'');
+    el.dataset.page = n.key;
+    el.innerHTML = `<span class="ni">${n.icon}</span><span>${esc(n.label)}</span>`;
+    el.onclick = () => navigate(n.key);
+    nav.appendChild(el);
+  });
+}
+
+function updateUserBlock(){
+  R('user-avatar').textContent = currentUser.name[0].toUpperCase();
+  R('user-name-label').textContent = currentUser.name;
+  R('user-role-label').textContent = roleName(currentUser.role) + ' · ' + currentUser.area;
+}
+
+function navigate(page){
+  if(typeof destroyCharts === 'function') destroyCharts();
+  currentPage = page;
+  const nav = R('sidebar-nav');
+  nav.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page===page));
+  const item = NAV.find(n=>n.key===page);
+  R('topbar-title').textContent = (item?.icon||'') + ' ' + (item?.label||'');
+  renderPage(page);
+}
+
+function openOSPorStatus(filter, label){
+  // Aplica o filtro antes de navegar
+  if(filter === '_atraso'){
+    // Para "Em Atraso": vai para OS com filtro "Todos" e filtra via busca especial
+    osFilter.status = 'Todos';
+    osFilter.tipo   = 'Todos';
+    osFilter.busca  = '';
+    osFilter._atraso = true;
+  } else {
+    osFilter.status  = filter;
+    osFilter.tipo    = 'Todos';
+    osFilter.busca   = '';
+    osFilter._atraso = false;
+  }
+  navigate('os');
+}
+
+// ══════════════════════════════════════════════
+//  PAGE ROUTER
+// ══════════════════════════════════════════════
+
+function renderPage(page){
+  const c = R('page-content');
+  const pages = {
+    dashboard: renderDashboard,
+    os: renderOS,
+    equipamentos: renderEquipamentos,
+    preventivo: renderPreventivo,
+    estoque: renderEstoque,
+    custos: renderCustos,
+    indicadores: renderIndicadores,
+    usuarios: renderUsuarios,
+  };
+  c.innerHTML = '';
+  (pages[page]||renderDashboard)(c);
+  // Aplica scrollbar dupla em todas as tabelas após render
+  setTimeout(applyDualScroll, 80);
+}
+
+// ══════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════
+
+let chartInstances = {};
+
+function destroyCharts(){
+  Object.values(chartInstances).forEach(ch=>{ try{ch.destroy();}catch(e){} });
+  chartInstances = {};
+}
+
+function renderDashboard(c){
+  destroyCharts();
+  const os = OS_DATA;
+  const total=os.length,
+    conc=os.filter(o=>o.status==='Concluída').length,
+    andamento=os.filter(o=>o.status==='Em Andamento').length,
+    emg=os.filter(o=>o.status==='Emergência').length,
+    agu=os.filter(o=>o.status==='Aguardando').length,
+    plan=os.filter(o=>o.status==='Planejada').length;
+
+  // OS em atraso: data prevista < hoje e não concluída
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const parseDate = s => {
+    if(!s) return null;
+    const [d,m,y] = s.split('/');
+    return new Date(+y,+m-1,+d);
+  };
+  const atraso = os.filter(o=>{
+    if(o.status==='Concluída') return false;
+    const dp = parseDate(o.dataPrevista);
+    return dp && dp < hoje;
+  }).length;
+
+  const tipoData = {
+    Corretiva: os.filter(o=>o.tipo==='Corretiva').length,
+    Preventiva: os.filter(o=>o.tipo==='Preventiva').length,
+    Preditiva: os.filter(o=>o.tipo==='Preditiva').length,
+    Melhoria: os.filter(o=>o.tipo==='Melhoria').length,
+  };
+
+  // OS em atraso por tipo
+  const tipoAtrasado = {
+    Corretiva: os.filter(o=>o.tipo==='Corretiva'&&o.status!=='Concluída'&&parseDate(o.dataPrevista)&&parseDate(o.dataPrevista)<hoje).length,
+    Preventiva: os.filter(o=>o.tipo==='Preventiva'&&o.status!=='Concluída'&&parseDate(o.dataPrevista)&&parseDate(o.dataPrevista)<hoje).length,
+    Preditiva: os.filter(o=>o.tipo==='Preditiva'&&o.status!=='Concluída'&&parseDate(o.dataPrevista)&&parseDate(o.dataPrevista)<hoje).length,
+    Melhoria: os.filter(o=>o.tipo==='Melhoria'&&o.status!=='Concluída'&&parseDate(o.dataPrevista)&&parseDate(o.dataPrevista)<hoje).length,
+  };
+
+  // OS em atraso por área
+  const areaAtrasado = [...new Set(os.map(o=>o.area))].map(a=>({
+    a,
+    n: os.filter(o=>o.area===a&&o.status!=='Concluída'&&parseDate(o.dataPrevista)&&parseDate(o.dataPrevista)<hoje).length
+  })).sort((a,b)=>b.n-a.n);
+
+  const areas = [...new Set(os.map(o=>o.area))]
+    .map(a=>({a,n:os.filter(o=>o.area===a).length}))
+    .sort((a,b)=>b.n-a.n);
+
+  // KPI super cards
+  const bigKpis = [
+    {v:total,    l:'Total OS',      sub:'todas as ordens',     c:'#f97316', icon:'📋', filter:'Todos'},
+    {v:conc,     l:'Concluídas',    sub:'finalizadas',          c:'#22c55e', icon:'✅', filter:'Concluída'},
+    {v:andamento,l:'Em Andamento',  sub:'em execução',          c:'#3b82f6', icon:'🔄', filter:'Em Andamento'},
+    {v:emg,      l:'Emergências',   sub:'atenção imediata',     c:'#c026d3', icon:'🚨', filter:'Emergência'},
+    {v:agu,      l:'Aguardando',    sub:'na fila',              c:'#f59e0b', icon:'⏳', filter:'Aguardando'},
+    {v:plan,     l:'Planejadas',    sub:'programadas',          c:'#8b5cf6', icon:'📅', filter:'Planejada'},
+    {v:atraso,   l:'Em Atraso',     sub:'passou da data prev.', c:'#ef4444', icon:'⏰', filter:'_atraso', pulse:true},
+  ];
+
+  const kpiHTML = bigKpis.map(k=>`
+    <div onclick="openOSPorStatus('${k.filter}','${k.l}')"
+      style="background:var(--surface);border:1.5px solid ${k.pulse&&k.v>0?k.c:'var(--border)'};
+      border-radius:14px;padding:22px 18px 18px;position:relative;overflow:hidden;cursor:pointer;
+      transition:border-color .2s,box-shadow .2s,transform .15s;"
+      onmouseover="this.style.borderColor='${k.c}';this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 32px rgba(0,0,0,.3)'"
+      onmouseout="this.style.borderColor='${k.pulse&&k.v>0?k.c:'var(--border)'}';this.style.transform='translateY(0)';this.style.boxShadow='none'">
+      <!-- top accent bar -->
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0;background:${k.c}"></div>
+      <!-- pulse dot for atraso -->
+      ${k.pulse&&k.v>0?`<div style="position:absolute;top:14px;right:14px;width:9px;height:9px;border-radius:50%;
+        background:${k.c};box-shadow:0 0 0 3px ${k.c}33;animation:pulse-dot 1.8s ease-in-out infinite"></div>`:''}
+      <!-- bg watermark icon -->
+      <div style="position:absolute;right:-4px;bottom:-6px;font-size:52px;opacity:.07;line-height:1;pointer-events:none;user-select:none">${k.icon}</div>
+      <!-- hint -->
+      <div style="position:absolute;top:12px;left:14px;font-size:9px;color:${k.c}88;font-weight:600;letter-spacing:.4px;text-transform:uppercase">Ver detalhes →</div>
+      <!-- label -->
+      <div style="font-family:'Roboto Condensed',sans-serif;font-size:10px;font-weight:700;color:var(--muted);
+        text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;margin-top:12px">${k.l}</div>
+      <!-- big number -->
+      <div style="font-family:'Roboto Condensed',sans-serif;font-size:44px;font-weight:800;line-height:1;
+        color:${k.c};letter-spacing:-2px">${k.v}</div>
+      <!-- sub label -->
+      <div style="font-family:'Roboto Condensed',sans-serif;font-size:11px;font-weight:400;
+        color:var(--muted);margin-top:8px;letter-spacing:.2px">${k.sub}</div>
+      <!-- mini bar showing proportion of total -->
+      <div style="margin-top:12px;background:${k.c}22;border-radius:3px;height:3px;overflow:hidden">
+        <div style="height:100%;border-radius:3px;background:${k.c};width:${total>0?Math.round((k.v/total)*100):0}%;transition:width .6s ease"></div>
+      </div>
+    </div>`).join('');
+
+  // Add pulse animation CSS if not already
+  if(!document.getElementById('pulse-anim-style')){
+    const s=document.createElement('style');
+    s.id='pulse-anim-style';
+    s.textContent='@keyframes pulse-dot{0%,100%{box-shadow:0 0 0 3px rgba(239,68,68,.25)}50%{box-shadow:0 0 0 7px rgba(239,68,68,.08)}}';
+    document.head.appendChild(s);
+  }
+
+  // Gauge style KPIs
+  const gauges = [
+    {l:'MTBF',    v:312,  un:'h',  pct:96, meta:'meta ≥ 300h', ok:true,  c:'#22c55e'},
+    {l:'MTTR',    v:3.8,  un:'h',  pct:95, meta:'meta ≤ 4h', ok:true, c:'#22c55e'},
+    {l:'Disponib.',v:93.5,un:'%',  pct:94,  meta:'meta ≥ 95%',  ok:false, c:'#ef4444'},
+    {l:'Eficiência',v:96, un:'%',  pct:96,  meta:'meta ≥ 90%',  ok:true,  c:'#22c55e'},
+    {l:'Ader. PM', v:80,  un:'%',  pct:80,  meta:'meta ≥ 90%',  ok:false, c:'#f59e0b'},
+  ];
+
+  const gaugeHTML = gauges.map(g=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px;text-align:center;">
+      <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">${g.l}</div>
+      <div style="font-family:'Roboto Condensed',sans-serif;font-size:30px;font-weight:800;color:${g.c};line-height:1">${g.v}<span style="font-size:14px;font-weight:600;color:var(--muted)">${g.un}</span></div>
+      <div style="margin:10px 0 6px;background:var(--surface2);border-radius:4px;height:6px;overflow:hidden">
+        <div style="height:100%;border-radius:4px;background:${g.c};width:${g.pct}%;transition:width .6s ease"></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted)">${g.meta}</div>
+      <div style="margin-top:6px;display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:${g.ok?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)'};color:${g.ok?'#22c55e':'#ef4444'}">${g.ok?'✅ OK':'⚠️ Atenção'}</div>
+    </div>`).join('');
+
+  c.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:24px">${kpiHTML}</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+
+      <!-- Donut OS por Status -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Status das OS</div></div>
+        <div class="card-body" style="padding:16px">
+          <div style="position:relative;height:200px"><canvas id="ch-status" role="img" aria-label="Gráfico de status das ordens de serviço">Status: Concluída ${conc}, Em Andamento ${andamento}, Aguardando ${agu}, Emergência ${emg}, Planejada ${plan}, Em Atraso ${atraso}.</canvas></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:12px;justify-content:center;font-size:11px;color:var(--muted)">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Concluída ${conc}</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#3b82f6;display:inline-block"></span>Andamento ${andamento}</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#f59e0b;display:inline-block"></span>Aguard. ${agu}</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#c026d3;display:inline-block"></span>Emerg. ${emg}</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#8b5cf6;display:inline-block"></span>Plan. ${plan}</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#ef4444;display:inline-block"></span>Atraso ${atraso}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barras OS por Tipo -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">OS por Tipo</div></div>
+        <div class="card-body" style="padding:16px">
+          <div style="position:relative;height:178px"><canvas id="ch-tipo" role="img" aria-label="Gráfico de ordens por tipo">Corretiva ${tipoData.Corretiva}, Preventiva ${tipoData.Preventiva}, Preditiva ${tipoData.Preditiva}, Melhoria ${tipoData.Melhoria}.</canvas></div>
+          <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--muted);justify-content:center">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#f97316;display:inline-block"></span>No Prazo</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#ef4444;display:inline-block"></span>Em Atraso</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barras OS por Área -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">OS por Área</div></div>
+        <div class="card-body" style="padding:16px">
+          <div style="position:relative;height:178px"><canvas id="ch-area" role="img" aria-label="Gráfico de ordens por área">${areas.map(x=>x.a+' '+x.n).join(', ')}.</canvas></div>
+          <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--muted);justify-content:center">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#f97316;display:inline-block"></span>No Prazo</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#ef4444;display:inline-block"></span>Em Atraso</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gauge KPIs -->
+    <div style="margin-bottom:20px">
+      <div style="font-family:'Roboto Condensed',sans-serif;font-size:15px;font-weight:700;margin-bottom:12px;color:var(--text)">⚡ Indicadores de Performance</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">${gaugeHTML}</div>
+    </div>
+
+    <!-- Evolução Mensal (linha) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📈 Evolução Mensal — OS Abertas vs Concluídas vs Em Atraso</div>
+        <div style="font-size:12px;color:var(--muted)">Jan–Fev 2025</div>
+      </div>
+      <div class="card-body" style="padding:16px">
+        <div style="position:relative;height:180px"><canvas id="ch-evolucao" role="img" aria-label="Evolução mensal de ordens abertas, concluídas e em atraso">Janeiro: abertas 28, concluídas 25, atraso 3. Fevereiro: abertas 32, concluídas 30, atraso 5.</canvas></div>
+        <div style="display:flex;gap:20px;margin-top:10px;font-size:12px;color:var(--muted)">
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:24px;height:3px;background:#f97316;display:inline-block;border-radius:2px"></span>OS Abertas</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:24px;height:3px;background:#22c55e;display:inline-block;border-radius:2px"></span>OS Concluídas</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:24px;height:3px;background:#ef4444;display:inline-block;border-radius:2px"></span>Em Atraso</span>
+        </div>
+      </div>
+    </div>`;
+
+  // Carrega Chart.js e renderiza todos os gráficos
+  loadChartJS(()=>{
+    // Donut Status — com % no tooltip
+    const totalDonut = conc+andamento+agu+emg+plan+atraso;
+    chartInstances['status'] = new Chart(document.getElementById('ch-status'), {
+      type:'doughnut',
+      data:{
+        labels:['Concluída','Em Andamento','Aguardando','Emergência','Planejada','Em Atraso'],
+        datasets:[{
+          data:[conc,andamento,agu,emg,plan,atraso],
+          backgroundColor:['#22c55e','#3b82f6','#f59e0b','#c026d3','#8b5cf6','#ef4444'],
+          borderWidth:0,
+          hoverOffset:8,
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        cutout:'70%',
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            callbacks:{
+              label: ctx => {
+                const pct = totalDonut>0 ? ((ctx.raw/totalDonut)*100).toFixed(1) : '0.0';
+                return `  ${ctx.label}: ${ctx.raw} OS (${pct}%)`;
+              }
+            },
+            backgroundColor:'rgba(22,27,39,.95)',
+            borderColor:'rgba(255,255,255,.08)',
+            borderWidth:1,
+            titleFont:{family:'Roboto Condensed',size:12},
+            bodyFont:{family:'Roboto Condensed',size:13,weight:'700'},
+            padding:10,
+          }
+        },
+      }
+    });
+
+    // Barras Tipo — 100% stacked, % calculado por barra
+    const tipoLabels = ['Corretiva','Preventiva','Preditiva','Melhoria'];
+    const tipoNoPrazo  = [tipoData.Corretiva-tipoAtrasado.Corretiva, tipoData.Preventiva-tipoAtrasado.Preventiva, tipoData.Preditiva-tipoAtrasado.Preditiva, tipoData.Melhoria-tipoAtrasado.Melhoria];
+    const tipoAtrasadoArr = [tipoAtrasado.Corretiva, tipoAtrasado.Preventiva, tipoAtrasado.Preditiva, tipoAtrasado.Melhoria];
+    const tipoTotais   = tipoLabels.map((_,i) => tipoNoPrazo[i] + tipoAtrasadoArr[i]);
+    // Converter para percentual (cada barra = 100%)
+    const tipoNoPrazoPct   = tipoNoPrazo.map((v,i)   => tipoTotais[i]>0 ? parseFloat(((v/tipoTotais[i])*100).toFixed(1)) : 0);
+    const tipoAtrasadoPct  = tipoAtrasadoArr.map((v,i) => tipoTotais[i]>0 ? parseFloat(((v/tipoTotais[i])*100).toFixed(1)) : 0);
+
+    chartInstances['tipo'] = new Chart(document.getElementById('ch-tipo'), {
+      type:'bar',
+      data:{
+        labels: tipoLabels,
+        datasets:[
+          {
+            label:'No Prazo',
+            data: tipoNoPrazoPct,
+            rawData: tipoNoPrazo,
+            backgroundColor:'#f97316',
+            borderRadius:4, borderSkipped:false, stack:'s',
+          },
+          {
+            label:'Em Atraso',
+            data: tipoAtrasadoPct,
+            rawData: tipoAtrasadoArr,
+            backgroundColor:'#ef4444',
+            borderRadius:4, borderSkipped:false, stack:'s', borderWidth:0,
+          }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            callbacks:{
+              title: ctx => ctx[0].label,
+              label: ctx => {
+                const raw = ctx.dataset.rawData ? ctx.dataset.rawData[ctx.dataIndex] : ctx.raw;
+                return `  ${ctx.dataset.label}: ${raw} OS (${ctx.raw}%)`;
+              }
+            },
+            backgroundColor:'rgba(22,27,39,.95)',
+            borderColor:'rgba(255,255,255,.08)',
+            borderWidth:1,
+            titleFont:{family:'Roboto Condensed',size:12},
+            bodyFont:{family:'Roboto Condensed',size:13,weight:'700'},
+            padding:10,
+          }
+        },
+        scales:{
+          x:{
+            grid:{color:'rgba(255,255,255,.04)'},
+            ticks:{color:'#6b7a9b',font:{size:11,family:'Roboto Condensed'}},
+            stacked:true,
+          },
+          y:{
+            grid:{color:'rgba(255,255,255,.04)'},
+            ticks:{color:'#6b7a9b',font:{size:11,family:'Roboto Condensed'},callback: v => v+'%'},
+            beginAtZero:true, max:100, stacked:true,
+          }
+        }
+      }
+    });
+
+    // Barras horizontais Área — 100% stacked, % calculado por barra
+    const areaLabels = areas.map(x=>x.a);
+    const areaNormalRaw = areas.map(x=>{ const at=areaAtrasado.find(a=>a.a===x.a); return x.n-(at?at.n:0); });
+    const areaAtrRaw    = areas.map(x=>{ const at=areaAtrasado.find(a=>a.a===x.a); return at?at.n:0; });
+    const areaTotaisPorBarra = areas.map(x=>x.n);
+    const areaNormalPct = areaNormalRaw.map((v,i) => areaTotaisPorBarra[i]>0 ? parseFloat(((v/areaTotaisPorBarra[i])*100).toFixed(1)) : 0);
+    const areaAtrPct    = areaAtrRaw.map((v,i)    => areaTotaisPorBarra[i]>0 ? parseFloat(((v/areaTotaisPorBarra[i])*100).toFixed(1)) : 0);
+
+    chartInstances['area'] = new Chart(document.getElementById('ch-area'), {
+      type:'bar',
+      data:{
+        labels: areaLabels,
+        datasets:[
+          {label:'No Prazo', data:areaNormalPct, rawData:areaNormalRaw, backgroundColor:'#f97316', borderRadius:4, borderSkipped:false, stack:'s'},
+          {label:'Em Atraso',data:areaAtrPct,    rawData:areaAtrRaw,    backgroundColor:'#ef4444', borderRadius:4, borderSkipped:false, stack:'s'},
+        ]
+      },
+      options:{
+        indexAxis:'y',
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            callbacks:{
+              title: ctx => ctx[0].label,
+              label: ctx => {
+                const raw = ctx.dataset.rawData ? ctx.dataset.rawData[ctx.dataIndex] : ctx.raw;
+                return `  ${ctx.dataset.label}: ${raw} OS (${ctx.raw}%)`;
+              }
+            },
+            backgroundColor:'rgba(22,27,39,.95)',
+            borderColor:'rgba(255,255,255,.08)',
+            borderWidth:1,
+            titleFont:{family:'Roboto Condensed',size:12},
+            bodyFont:{family:'Roboto Condensed',size:13,weight:'700'},
+            padding:10,
+          }
+        },
+        scales:{
+          x:{
+            grid:{color:'rgba(255,255,255,.04)'},
+            ticks:{color:'#6b7a9b',font:{size:11,family:'Roboto Condensed'},callback: v => v+'%'},
+            beginAtZero:true, max:100, stacked:true,
+          },
+          y:{
+            grid:{display:false},
+            ticks:{color:'#6b7a9b',font:{size:11,family:'Roboto Condensed'}},
+            stacked:true,
+          }
+        }
+      }
+    });
+
+    // Linha Evolução (com atraso)
+    chartInstances['evolucao'] = new Chart(document.getElementById('ch-evolucao'), {
+      type:'line',
+      data:{
+        labels:['Janeiro','Fevereiro'],
+        datasets:[
+          {label:'OS Abertas',data:[28,32],borderColor:'#f97316',backgroundColor:'rgba(249,115,22,.07)',
+            pointBackgroundColor:'#f97316',pointRadius:5,tension:.3,fill:true,borderWidth:2.5},
+          {label:'OS Concluídas',data:[25,30],borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.05)',
+            pointBackgroundColor:'#22c55e',pointRadius:5,tension:.3,fill:true,borderWidth:2.5},
+          {label:'Em Atraso',data:[3,5],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.08)',
+            pointBackgroundColor:'#ef4444',pointRadius:6,tension:.3,fill:true,borderWidth:2.5,
+            pointStyle:'rectRot'},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+ctx.raw}},
+        },
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6b7a9b',font:{size:12}}},
+          y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6b7a9b',font:{size:11},stepSize:5},beginAtZero:true,min:0},
+        }
+      }
+    });
+  });
+}
+
+function loadChartJS(cb){
+  if(window.Chart){ cb(); return; }
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+  s.onload=cb;
+  document.head.appendChild(s);
+}
+
+// ══════════════════════════════════════════════
+//  ORDENS DE SERVIÇO
+// ══════════════════════════════════════════════
+
+let osFilter = {busca:'', status:'Todos', tipo:'Todos', _atraso:false};
+
+function renderOS(c){
+  c.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔧 Ordens de Serviço</div>
+        <div class="controls">
+          <input class="inp inp-sm" id="os-busca" placeholder="🔍 Buscar OS..." value="${esc(osFilter.busca)}" oninput="osFilter.busca=this.value;osFilter._atraso=false;renderOSTable()" style="width:200px">
+          <select class="inp inp-sm" id="os-status" onchange="osFilter.status=this.value;osFilter._atraso=false;renderOSTable()">
+            ${['Todos','Concluída','Em Andamento','Aguardando','Emergência','Planejada'].map(s=>`<option${osFilter.status===s?' selected':''}>${s}</option>`).join('')}
+          </select>
+          <select class="inp inp-sm" id="os-tipo" onchange="osFilter.tipo=this.value;renderOSTable()">
+            ${['Todos','Corretiva','Preventiva','Preditiva','Melhoria'].map(t=>`<option${osFilter.tipo===t?' selected':''}>${t}</option>`).join('')}
+          </select>
+          ${osFilter._atraso?`<span style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:6px">⏰ Em Atraso <span onclick="osFilter._atraso=false;osFilter.status='Todos';renderOS(R('page-content'))" style="cursor:pointer;opacity:.7" title="Limpar filtro">✕</span></span>`:''}
+          ${isAdmin()?`<button class="btn btn-primary btn-sm" onclick="openNovaOS()">➕ Nova OS</button>`:''}
+        </div>
+      </div>
+      <div class="table-wrap" id="os-table-wrap"></div>
+    </div>`;
+  renderOSTable();
+}
+
+function renderOSTable(){
+  const b = osFilter.busca.toLowerCase();
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const parseDate = s=>{ if(!s) return null; const[d,m,y]=s.split('/'); return new Date(+y,+m-1,+d); };
+
+  const filtradas = OS_DATA.filter(o=>{
+    const s=(o.id+o.equipamento+o.area+o.executante+o.tag).toLowerCase().includes(b);
+    const st=osFilter.status==='Todos'||o.status===osFilter.status;
+    const tp=osFilter.tipo==='Todos'||o.tipo===osFilter.tipo;
+    if(osFilter._atraso){
+      const dp=parseDate(o.dataPrevista);
+      return s&&tp&&o.status!=='Concluída'&&dp&&dp<hoje;
+    }
+    return s&&st&&tp;
+  });
+
+  if(!filtradas.length){
+    R('os-table-wrap').innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Nenhuma OS encontrada</div></div>';
+    return;
+  }
+
+  const rows = filtradas.map(o=>`
+    <tr>
+      <td><strong style="color:var(--accent);font-family:'Roboto Condensed',sans-serif;font-weight:800;font-size:13px">${esc(o.id)}</strong></td>
+      <td>${badge(o.tipo,'#6b7a9b')}</td>
+      <td>${badge(o.prioridade,prioColor(o.prioridade))}</td>
+      <td>${esc(o.equipamento)}</td>
+      <td style="font-family:'Roboto Condensed',sans-serif;font-size:12px;font-weight:600;color:var(--muted)">${esc(o.tag)}</td>
+      <td>${esc(o.area)}</td>
+      <td>${esc(o.executante)}</td>
+      <td style="color:var(--muted);font-size:12px">${esc(o.dataAbertura)}</td>
+      <td>${o.hhPrevisto}h</td>
+      <td>${badge(o.status,statusColor(o.status))}</td>
+      <td style="text-align:center">${o.okTecnico?'<span style="color:#22c55e">✅</span>':'<span style="color:var(--muted)">—</span>'}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="openOS('${esc(o.id)}')">${isAdmin()?'✏️ Editar':'👁 Ver'}</button>
+      </td>
+    </tr>`).join('');
+
+  R('os-table-wrap').innerHTML=`<table>
+    <thead><tr>
+      <th>Nº OS</th><th>Tipo</th><th>Prioridade</th><th>Equipamento</th>
+      <th>TAG</th><th>Área</th><th>Executante</th><th>Data Abertura</th>
+      <th>HH Prev.</th><th>Status</th><th>OK</th><th>Ações</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+  setTimeout(applyDualScroll, 30);
+}
+
+function openOS(id){
+  const os = OS_DATA.find(o=>o.id===id);
+  if(!os) return;
+  window._mCtx = {type:'os', id:id, idx:-1};
+  window.DEL = {
+    label: os.id + ' — ' + os.equipamento,
+    fn: function(){
+      const i = OS_DATA.findIndex(function(o){ return o.id===id; });
+      if(i>-1){ OS_DATA.splice(i,1); saveAll(); }
+      _closeModalSilent();
+      renderOSTable();
+    }
+  };
+  if(isAdmin()) renderOSEditModal(os);
+  else renderOSViewModal(os);
+}
+
+// ── VIEW MODAL (técnico/auxiliar) ──
+function renderOSViewModal(os){
+  const comentarios = os.comentarios.map(c=>`
+    <div class="comment">
+      <div class="comment-meta">${esc(c.autor)} · ${esc(c.role)} · ${esc(c.data)}</div>
+      <div class="comment-text">${esc(c.texto)}</div>
+    </div>`).join('') || '<p style="color:var(--muted);font-size:13px">Nenhum comentário ainda.</p>';
+
+  const okBlock = os.okTecnico
+    ? `<div class="ok-block done"><div class="ok-block-title">✅ OK Técnico já confirmado</div></div>`
+    : `<div class="ok-block">
+        <div class="ok-block-title">✅ Dar OK na Ordem de Serviço</div>
+        <div class="ok-block-sub">Ao confirmar, você atesta que o serviço foi executado conforme descrito.</div>
+        <button class="btn btn-success" onclick="darOK('${esc(os.id)}')">Confirmar OK</button>
+       </div>`;
+
+  showModal(`
+    <div class="modal-title">OS — ${esc(os.id)}</div>
+    <div class="modal-badges">
+      ${badge(os.prioridade,prioColor(os.prioridade))}
+      ${badge(os.status,statusColor(os.status))}
+      ${badge(os.tipo,'#6b7a9b')}
+      ${badge(os.especialidade,'#22b8cf')}
+    </div>
+    ${[
+      ['Equipamento',os.equipamento],['TAG',os.tag],['Área',os.area],
+      ['Tipo',os.tipo],['Especialidade',os.especialidade],
+      ['Executante',os.executante],['Solicitante',os.solicitante],
+      ['Data Abertura',os.dataAbertura],['Data Prevista',os.dataPrevista],
+      ['Data Conclusão',os.dataConclusao||'—'],
+      ['HH Previsto',os.hhPrevisto+'h'],['HH Real',os.hhReal+'h'],
+    ].map(([l,v])=>`<div class="detail-row"><span class="detail-label">${l}</span><span class="detail-val">${esc(v)}</span></div>`).join('')}
+    <div style="margin-top:12px">
+      <div class="detail-box"><div class="detail-box-label">Descrição do Serviço</div>${esc(os.descricao)}</div>
+      <div class="detail-box" style="margin-top:8px"><div class="detail-box-label">Causa Raiz</div>${esc(os.causaRaiz)}</div>
+      <div class="detail-box" style="margin-top:8px"><div class="detail-box-label">Ação Corretiva</div>${esc(os.acaoCorretiva)}</div>
+    </div>
+    ${okBlock}
+    <div class="comments-section">
+      <div class="comments-title">💬 Comentários</div>
+      <div id="comments-list">${comentarios}</div>
+      <div class="comment-input-row">
+        <input class="inp inp-full" id="new-comment" placeholder="Escreva um comentário e pressione Enter...">
+        <button class="btn btn-primary btn-sm" onclick="addComment('${esc(os.id)}')">Enviar</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
+    </div>`);
+
+  R('new-comment').addEventListener('keydown', e => { if(e.key==='Enter') addComment(os.id); });
+}
+
+// ── EDIT MODAL (admin/líder) ──
+function renderOSEditModal(os){
+  const statusOpts=['Planejada','Aguardando','Em Andamento','Concluída','Emergência'].map(s=>`<option${os.status===s?' selected':''}>${s}</option>`).join('');
+  const prioOpts=['Alta','Média','Baixa','Planejada'].map(p=>`<option${os.prioridade===p?' selected':''}>${p}</option>`).join('');
+  const tipoOpts=['Corretiva','Preventiva','Preditiva','Melhoria'].map(t=>`<option${os.tipo===t?' selected':''}>${t}</option>`).join('');
+
+  const comentarios = os.comentarios.map(c=>`
+    <div class="comment">
+      <div class="comment-meta">${esc(c.autor)} · ${esc(c.role)} · ${esc(c.data)}</div>
+      <div class="comment-text">${esc(c.texto)}</div>
+    </div>`).join('') || '<p style="color:var(--muted);font-size:13px">Nenhum comentário ainda.</p>';
+
+  showModal(`
+    <div class="modal-title">✏️ Editar OS — ${esc(os.id)}</div>
+    <div class="modal-badges">
+      ${badge(os.prioridade,prioColor(os.prioridade))}
+      ${badge(os.status,statusColor(os.status))}
+    </div>
+    <div class="form-grid">
+      <div class="fg"><label>Tipo OS</label><select class="inp" id="e-tipo">${tipoOpts}</select></div>
+      <div class="fg"><label>Prioridade</label><select class="inp" id="e-prio">${prioOpts}</select></div>
+      <div class="fg"><label>Status</label><select class="inp" id="e-status">${statusOpts}</select></div>
+      <div class="fg"><label>Especialidade</label><input class="inp" id="e-esp" value="${esc(os.especialidade)}"></div>
+      <div class="fg"><label>Equipamento</label><input class="inp" id="e-eq" value="${esc(os.equipamento)}"></div>
+      <div class="fg"><label>TAG</label><input class="inp" id="e-tag" value="${esc(os.tag)}"></div>
+      <div class="fg"><label>Área</label><input class="inp" id="e-area" value="${esc(os.area)}"></div>
+      <div class="fg"><label>Executante</label><input class="inp" id="e-exec" value="${esc(os.executante)}"></div>
+      <div class="fg"><label>Solicitante</label><input class="inp" id="e-sol" value="${esc(os.solicitante)}"></div>
+      <div class="fg"><label>Data Prevista</label><input class="inp" id="e-dprev" value="${esc(os.dataPrevista)}"></div>
+      <div class="fg"><label>Data Conclusão</label><input class="inp" id="e-dconc" value="${esc(os.dataConclusao)}"></div>
+      <div class="fg"><label>HH Previsto</label><input class="inp" type="number" id="e-hhp" value="${os.hhPrevisto}"></div>
+      <div class="fg"><label>HH Real</label><input class="inp" type="number" id="e-hhr" value="${os.hhReal}"></div>
+      <div class="fg full"><label>Descrição do Serviço</label><textarea class="inp inp-full" id="e-desc">${esc(os.descricao)}</textarea></div>
+      <div class="fg full"><label>Causa Raiz</label><textarea class="inp inp-full" id="e-causa">${esc(os.causaRaiz)}</textarea></div>
+      <div class="fg full"><label>Ação Corretiva</label><textarea class="inp inp-full" id="e-acao">${esc(os.acaoCorretiva)}</textarea></div>
+    </div>
+    <div class="comments-section">
+      <div class="comments-title">💬 Comentários</div>
+      <div id="comments-list">${comentarios}</div>
+      <div class="comment-input-row">
+        <input class="inp inp-full" id="new-comment" placeholder="Adicionar comentário...">
+        <button class="btn btn-primary btn-sm" onclick="addComment('${esc(os.id)}')">Enviar</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" onclick="deleteFromModal()">🗑️ Apagar OS</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveOS('${esc(os.id)}')">💾 Salvar</button>
+      </div>
+    </div>`);
+
+  R('new-comment').addEventListener('keydown', e => { if(e.key==='Enter') addComment(os.id); });
+}
+
+function saveOS(id){
+  const os = OS_DATA.find(o=>o.id===id);
+  if(!os) return;
+  os.tipo      = R('e-tipo').value;
+  os.prioridade= R('e-prio').value;
+  os.status    = R('e-status').value;
+  os.especialidade=R('e-esp').value;
+  os.equipamento=R('e-eq').value;
+  os.tag       = R('e-tag').value;
+  os.area      = R('e-area').value;
+  os.executante= R('e-exec').value;
+  os.solicitante=R('e-sol').value;
+  os.dataPrevista=R('e-dprev').value;
+  os.dataConclusao=R('e-dconc').value;
+  os.hhPrevisto= parseFloat(R('e-hhp').value)||0;
+  os.hhReal    = parseFloat(R('e-hhr').value)||0;
+  os.descricao = R('e-desc').value;
+  os.causaRaiz = R('e-causa').value;
+  os.acaoCorretiva=R('e-acao').value;
+  saveAll();
+  closeModal();
+  renderOSTable();
+}
+
+function darOK(id){
+  const os = OS_DATA.find(o=>o.id===id);
+  if(!os) return;
+  os.okTecnico = true;
+  os.status = 'Concluída';
+  saveAll();
+  closeModal();
+  renderOSTable();
+}
+
+function addComment(id){
+  const os = OS_DATA.find(o=>o.id===id);
+  if(!os) return;
+  const inp = R('new-comment');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  const c = {autor:currentUser.name, role:roleName(currentUser.role), texto:txt, data:new Date().toLocaleString('pt-BR')};
+  os.comentarios.push(c);
+  saveAll();
+  inp.value = '';
+  const list = R('comments-list');
+  if(list){
+    list.innerHTML += `<div class="comment">
+      <div class="comment-meta">${esc(c.autor)} · ${esc(c.role)} · ${esc(c.data)}</div>
+      <div class="comment-text">${esc(c.texto)}</div>
+    </div>`;
+    list.scrollTop = list.scrollHeight;
+  }
+}
+
+function openNovaOS(){
+  const statusOpts=['Planejada','Aguardando','Em Andamento','Concluída','Emergência'].map(s=>`<option>${s}</option>`).join('');
+  const prioOpts=['Alta','Média','Baixa','Planejada'].map(p=>`<option>${p}</option>`).join('');
+  const tipoOpts=['Corretiva','Preventiva','Preditiva','Melhoria'].map(t=>`<option>${t}</option>`).join('');
+  const hoje = new Date().toLocaleDateString('pt-BR');
+
+  showModal(`
+    <div class="modal-title">➕ Nova Ordem de Serviço</div>
+    <div class="form-grid">
+      <div class="fg"><label>Tipo OS</label><select class="inp" id="n-tipo">${tipoOpts}</select></div>
+      <div class="fg"><label>Prioridade</label><select class="inp" id="n-prio">${prioOpts}</select></div>
+      <div class="fg"><label>Status</label><select class="inp" id="n-status">${statusOpts}</select></div>
+      <div class="fg"><label>Especialidade</label><input class="inp" id="n-esp" placeholder="Ex: Mecânica"></div>
+      <div class="fg"><label>Equipamento</label><input class="inp" id="n-eq" placeholder="Ex: Compressor AR-01"></div>
+      <div class="fg"><label>TAG</label><input class="inp" id="n-tag" placeholder="Ex: COMP-01"></div>
+      <div class="fg"><label>Área/Setor</label><input class="inp" id="n-area" placeholder="Ex: Utilidades"></div>
+      <div class="fg"><label>Solicitante</label><input class="inp" id="n-sol" placeholder="Nome do solicitante"></div>
+      <div class="fg"><label>Executante</label><input class="inp" id="n-exec" placeholder="Técnico responsável"></div>
+      <div class="fg"><label>Data Prevista</label><input class="inp" id="n-dprev" placeholder="${hoje}"></div>
+      <div class="fg"><label>HH Previsto</label><input class="inp" type="number" id="n-hhp" value="0" min="0"></div>
+      <div class="fg full"><label>Descrição do Serviço</label><textarea class="inp inp-full" id="n-desc" placeholder="Descreva o serviço a ser executado..."></textarea></div>
+      <div class="fg full"><label>Causa Raiz</label><textarea class="inp inp-full" id="n-causa" placeholder="Causa identificada..."></textarea></div>
+      <div class="fg full"><label>Ação Corretiva</label><textarea class="inp inp-full" id="n-acao" placeholder="Ação corretiva planejada..."></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="criarOS()">✅ Criar OS</button>
+    </div>`);
+}
+
+function criarOS(){
+  const num = String(OS_DATA.length+1).padStart(3,'0');
+  const novaOS = {
+    id:`OS-2025-${num}`,
+    tipo:R('n-tipo').value, prioridade:R('n-prio').value, status:R('n-status').value,
+    dataAbertura:new Date().toLocaleDateString('pt-BR'),
+    dataPrevista:R('n-dprev').value, dataConclusao:'',
+    equipamento:R('n-eq').value, tag:R('n-tag').value, area:R('n-area').value,
+    solicitante:R('n-sol').value, executante:R('n-exec').value, especialidade:R('n-esp').value,
+    descricao:R('n-desc').value, causaRaiz:R('n-causa').value, acaoCorretiva:R('n-acao').value,
+    hhPrevisto:parseFloat(R('n-hhp').value)||0, hhReal:0,
+    okTecnico:false, comentarios:[],
+  };
+  OS_DATA.unshift(novaOS);
+  saveAll();
+  closeModal();
+  renderOSTable();
+}
+
+function removeOS(id){
+  const os = OS_DATA.find(o=>o.id===id);
+  if(!os) return;
+  if(!confirm(`Deseja apagar a OS ${id}?\n\nEquipamento: ${os.equipamento}\nStatus: ${os.status}\n\nEsta ação não pode ser desfeita.`)) return;
+  OS_DATA.splice(OS_DATA.indexOf(os), 1);
+  saveAll();
+  renderOSTable();
+}
+
+// ══════════════════════════════════════════════
+//  EQUIPAMENTOS
+// ══════════════════════════════════════════════
+
+let eqFilter = {busca:'', area:'Todas'};
+
+function renderEquipamentos(c){
+  const areas = ['Todas',...new Set(EQUIPAMENTOS.map(e=>e.area))];
+  c.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">⚙️ Cadastro de Equipamentos</div>
+        <div class="controls">
+          <input class="inp inp-sm" placeholder="🔍 Buscar..." value="${esc(eqFilter.busca)}" oninput="eqFilter.busca=this.value;renderEqTable()" style="width:200px">
+          <select class="inp inp-sm" onchange="eqFilter.area=this.value;renderEqTable()">
+            ${areas.map(a=>`<option${eqFilter.area===a?' selected':''}>${a}</option>`).join('')}
+          </select>
+          ${isAdmin()?'<button class="btn btn-primary btn-sm" onclick="openNovoEquip()">➕ Novo Equipamento</button>':''}
+        </div>
+      </div>
+      <div class="table-wrap" id="eq-table-wrap"></div>
+    </div>`;
+  renderEqTable();
+}
+
+function renderEqTable(){
+  const b = eqFilter.busca.toLowerCase();
+  const f = EQUIPAMENTOS.filter(e=>{
+    const s=(e.tag+e.descricao+e.fabricante+e.modelo).toLowerCase().includes(b);
+    const a=eqFilter.area==='Todas'||e.area===eqFilter.area;
+    return s&&a;
+  });
+  if(!f.length){ R('eq-table-wrap').innerHTML='<div class="empty"><div class="empty-icon">⚙️</div><div class="empty-text">Nenhum equipamento encontrado</div></div>'; return; }
+  const rows = f.map((e,i)=>`<tr>
+    <td><strong style="color:var(--accent);font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:13px">${esc(e.tag)}</strong></td>
+    <td>${esc(e.descricao)}</td>
+    <td>${esc(e.area)}</td>
+    <td>${esc(e.fabricante)}</td>
+    <td style="font-family:'Roboto Condensed',sans-serif;font-size:12px;font-weight:600;color:var(--muted)">${esc(e.modelo)}</td>
+    <td>${e.ano}</td>
+    <td style="font-size:12px;color:var(--muted2)">${esc(e.potencia)}</td>
+    <td>${badge(e.criticidade,critColor(e.criticidade))}</td>
+    <td style="font-family:'Roboto Condensed',sans-serif;font-weight:800">${fmtR(e.custo)}</td>
+    <td>${badge(e.status,eqStatusColor(e.status))}</td>
+    <td style="font-size:12px;color:var(--muted)">${esc(e.local)}</td>
+    <td style="font-size:11px;color:var(--muted)">${esc(e.obs)}</td>
+    ${isAdmin()?`<td><button class="btn btn-secondary btn-sm" onclick="openEditEquip(${EQUIPAMENTOS.indexOf(e)})">✏️ Editar</button></td>`:'<td></td>'}
+  </tr>`).join('');
+  R('eq-table-wrap').innerHTML=`<table>
+    <thead><tr>
+      <th>TAG</th><th>Descrição</th><th>Área</th><th>Fabricante</th><th>Modelo</th>
+      <th>Ano</th><th>Potência/Cap.</th><th>Criticidade</th><th>Custo Rep.</th>
+      <th>Status</th><th>Localização</th><th>Observações</th><th>Ações</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+  setTimeout(applyDualScroll, 30);
+}
+
+function equipFormHTML(e){
+  const critOpts=['Alta','Média','Baixa'].map(x=>`<option${(e&&e.criticidade===x)?' selected':''}>${x}</option>`).join('');
+  const stOpts=['Operando','Parado','Em Manutenção','Stand-by'].map(x=>`<option${(e&&e.status===x)?' selected':''}>${x}</option>`).join('');
+  return `<div class="form-grid">
+    <div class="fg"><label>TAG *</label><input class="inp" id="eq-tag" value="${esc(e?e.tag:'')}" placeholder="Ex: COMP-03"></div>
+    <div class="fg"><label>Descrição *</label><input class="inp" id="eq-desc" value="${esc(e?e.descricao:'')}" placeholder="Ex: Compressor Parafuso"></div>
+    <div class="fg"><label>Área</label><input class="inp" id="eq-area" value="${esc(e?e.area:'')}" placeholder="Ex: Utilidades"></div>
+    <div class="fg"><label>Fabricante</label><input class="inp" id="eq-fab" value="${esc(e?e.fabricante:'')}" placeholder="Ex: Atlas Copco"></div>
+    <div class="fg"><label>Modelo</label><input class="inp" id="eq-modelo" value="${esc(e?e.modelo:'')}" placeholder="Ex: GA-37"></div>
+    <div class="fg"><label>Nº Série</label><input class="inp" id="eq-nserie" value="${esc(e?e.nSerie:'')}" placeholder="Ex: SN-2024-001"></div>
+    <div class="fg"><label>Ano Fabricação</label><input class="inp" type="number" id="eq-ano" value="${e?e.ano:new Date().getFullYear()}"></div>
+    <div class="fg"><label>Data Instalação</label><input class="inp" id="eq-inst" value="${esc(e?e.dataInstal:'')}" placeholder="DD/MM/AAAA"></div>
+    <div class="fg"><label>Potência/Capacidade</label><input class="inp" id="eq-pot" value="${esc(e?e.potencia:'')}" placeholder="Ex: 37 kW / 5,4 m³/min"></div>
+    <div class="fg"><label>Criticidade</label><select class="inp" id="eq-crit">${critOpts}</select></div>
+    <div class="fg"><label>Status</label><select class="inp" id="eq-st">${stOpts}</select></div>
+    <div class="fg"><label>Vida Útil (anos)</label><input class="inp" type="number" id="eq-vida" value="${e?e.vidaUtil:20}"></div>
+    <div class="fg"><label>Custo Reposição (R$)</label><input class="inp" type="number" id="eq-custo" value="${e?e.custo:0}"></div>
+    <div class="fg"><label>Garantia</label><input class="inp" id="eq-gar" value="${esc(e?e.garantia:'')}" placeholder="DD/MM/AAAA"></div>
+    <div class="fg full"><label>Localização</label><input class="inp" id="eq-local" value="${esc(e?e.local:'')}" placeholder="Ex: Sala Compressores"></div>
+    <div class="fg full"><label>Observações</label><textarea class="inp inp-full" id="eq-obs">${esc(e?e.obs:'')}</textarea></div>
+  </div>`;
+}
+
+function openNovoEquip(){
+  showModal(`<div class="modal-title">➕ Novo Equipamento</div>
+    ${equipFormHTML(null)}
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNovoEquip()">✅ Cadastrar</button>
+    </div>`);
+}
+
+function openEditEquip(idx){
+  window._mCtx = {type:'equip', id:null, idx:idx};
+  const e = EQUIPAMENTOS[idx];
+  window.DEL = {
+    label: e.tag + ' — ' + e.descricao,
+    fn: function(){ EQUIPAMENTOS.splice(idx,1); saveAll(); _closeModalSilent(); renderEquipamentos(R('page-content')); }
+  };
+  showModal(`<div class="modal-title">✏️ Editar Equipamento — ${esc(e.tag)}</div>
+    ${equipFormHTML(e)}
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" onclick="deleteFromModal()">🗑️ Apagar</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEditEquip(${idx})">💾 Salvar</button>
+      </div>
+    </div>`);
+}
+
+function _collectEquipForm(){
+  return {
+    tag:R('eq-tag').value.trim(), descricao:R('eq-desc').value.trim(),
+    area:R('eq-area').value.trim(), fabricante:R('eq-fab').value.trim(),
+    modelo:R('eq-modelo').value.trim(), nSerie:R('eq-nserie').value.trim(),
+    ano:parseInt(R('eq-ano').value)||new Date().getFullYear(),
+    dataInstal:R('eq-inst').value.trim(), potencia:R('eq-pot').value.trim(),
+    criticidade:R('eq-crit').value, status:R('eq-st').value,
+    vidaUtil:parseInt(R('eq-vida').value)||20,
+    custo:parseFloat(R('eq-custo').value)||0,
+    garantia:R('eq-gar').value.trim(), local:R('eq-local').value.trim(),
+    obs:R('eq-obs').value.trim(),
+  };
+}
+
+function saveNovoEquip(){
+  const e=_collectEquipForm();
+  if(!e.tag||!e.descricao){alert('TAG e Descrição são obrigatórios.');return;}
+  EQUIPAMENTOS.push(e);
+  saveAll();
+  closeModal(); renderEquipamentos(R('page-content'));
+}
+
+function saveEditEquip(idx){
+  const e=_collectEquipForm();
+  if(!e.tag||!e.descricao){alert('TAG e Descrição são obrigatórios.');return;}
+  Object.assign(EQUIPAMENTOS[idx],e);
+  saveAll();
+  closeModal(); renderEquipamentos(R('page-content'));
+}
+
+function removeEquip(idx){
+  if(!confirm(`Remover equipamento "${EQUIPAMENTOS[idx].tag}"? Esta ação não pode ser desfeita.`))return;
+  EQUIPAMENTOS.splice(idx,1);
+  saveAll();
+  renderEquipamentos(R('page-content'));
+}
+
+// ══════════════════════════════════════════════
+//  PLANO PREVENTIVO
+// ══════════════════════════════════════════════
+
+function renderPreventivo(c){
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const mTh = meses.map(m=>`<th style="text-align:center;padding:10px 8px">${m}</th>`).join('');
+  const rows = PLANO_PREV.map((p,idx)=>{
+    const mCols = p.m.map((v,mi)=>{
+      if(isAdmin()){
+        const vals=['','✅','📋'];
+        const cur=vals.indexOf(v);
+        const next=vals[(cur+1)%3];
+        return `<td class="pm-cell" style="cursor:pointer" title="Clique para alternar" onclick="togglePM(${idx},${mi})">${v==='✅'?'✅':v==='📋'?'<span style=\"opacity:.65\">📋</span>':'<span style=\"color:var(--border2)\">·</span>'}</td>`;
+      }
+      return `<td class="pm-cell">${v==='✅'?'<span title="Concluída">✅</span>':v==='📋'?'<span title="Programada" style="opacity:.65">📋</span>':'<span style="color:var(--border2)">·</span>'}</td>`;
+    }).join('');
+    return `<tr>
+      <td>${esc(p.eq)}</td>
+      <td style="font-family:'Roboto Condensed',sans-serif;font-size:12px;font-weight:600;color:var(--muted)">${esc(p.tag)}</td>
+      <td>${esc(p.area)}</td>
+      <td>${badge(p.freq,'#3b82f6')}</td>
+      <td>${esc(p.resp)}</td>
+      ${mCols}
+      <td style="text-align:center;font-family:'Roboto Condensed',sans-serif;font-weight:700">${p.hh}h</td>
+      <td style="font-family:'Roboto Condensed',sans-serif;font-weight:800;color:var(--accent)">${fmtR(p.custo)}</td>
+      ${isAdmin()?`<td><button class="btn btn-secondary btn-sm" onclick="openEditPM(${idx})">✏️ Editar</button></td>`:'<td></td>'}
+    </tr>`;
+  }).join('');
+
+  c.innerHTML=`
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📅 Plano Mestre de Manutenção Preventiva — 2026</div>
+        <div class="controls">
+          <span style="font-size:12px;color:var(--muted)">✅ Concluída &nbsp; 📋 Programada ${isSuperAdmin()?'&nbsp;· Clique nas células para alternar':''}</span>
+          ${isAdmin()?'<button class="btn btn-primary btn-sm" onclick="openNovoPM()">➕ Novo Item</button>':''}
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Equipamento</th><th>TAG</th><th>Área</th><th>Frequência</th><th>Responsável</th>
+            ${mTh}
+            <th style="text-align:center">HH/Exec.</th><th>Custo Est.</th><th>Ações</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function togglePM(idx,mi){
+  const vals=['','✅','📋'];
+  const cur=vals.indexOf(PLANO_PREV[idx].m[mi]);
+  PLANO_PREV[idx].m[mi]=vals[(cur+1)%3];
+  saveAll();
+  renderPreventivo(R('page-content'));
+}
+
+function pmFormHTML(p){
+  const freqOpts=['Diária','Semanal','Quinzenal','Mensal','Bimestral','Trimestral','Semestral','Anual']
+    .map(f=>`<option${p&&p.freq===f?' selected':''}>${f}</option>`).join('');
+  return `<div class="form-grid">
+    <div class="fg"><label>Equipamento *</label><input class="inp" id="pm-eq" value="${esc(p?p.eq:'')}" placeholder="Nome do equipamento"></div>
+    <div class="fg"><label>TAG</label><input class="inp" id="pm-tag" value="${esc(p?p.tag:'')}" placeholder="Ex: COMP-01"></div>
+    <div class="fg"><label>Área</label><input class="inp" id="pm-area" value="${esc(p?p.area:'')}" placeholder="Ex: Utilidades"></div>
+    <div class="fg"><label>Frequência</label><select class="inp" id="pm-freq">${freqOpts}</select></div>
+    <div class="fg"><label>Responsável</label><input class="inp" id="pm-resp" value="${esc(p?p.resp:'')}" placeholder="Nome do responsável"></div>
+    <div class="fg"><label>HH por Execução</label><input class="inp" type="number" id="pm-hh" value="${p?p.hh:4}"></div>
+    <div class="fg"><label>Custo Estimado (R$)</label><input class="inp" type="number" id="pm-custo" value="${p?p.custo:0}"></div>
+  </div>`;
+}
+
+function openNovoPM(){
+  showModal(`<div class="modal-title">➕ Novo Item — Plano Preventivo</div>
+    ${pmFormHTML(null)}
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNovoPM()">✅ Adicionar</button>
+    </div>`);
+}
+
+function openEditPM(idx){
+  window._mCtx = {type:'pm', id:null, idx:idx};
+  const p=PLANO_PREV[idx];
+  window.DEL = {
+    label: p.eq + ' — ' + p.tag,
+    fn: function(){ PLANO_PREV.splice(idx,1); saveAll(); _closeModalSilent(); renderPreventivo(R('page-content')); }
+  };
+  showModal(`<div class="modal-title">✏️ Editar Plano — ${esc(p.eq)}</div>
+    ${pmFormHTML(p)}
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" onclick="deleteFromModal()">🗑️ Apagar</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEditPM(${idx})">💾 Salvar</button>
+      </div>
+    </div>`);
+}
+
+function _collectPMForm(){
+  return {
+    eq:R('pm-eq').value.trim(), tag:R('pm-tag').value.trim(),
+    area:R('pm-area').value.trim(), freq:R('pm-freq').value,
+    resp:R('pm-resp').value.trim(),
+    hh:parseFloat(R('pm-hh').value)||4,
+    custo:parseFloat(R('pm-custo').value)||0,
+    m:['','','','','','','','','','','',''],
+  };
+}
+
+function saveNovoPM(){
+  const p=_collectPMForm();
+  if(!p.eq){alert('Informe o nome do equipamento.');return;}
+  PLANO_PREV.push(p);
+  saveAll();
+  closeModal(); renderPreventivo(R('page-content'));
+}
+
+function saveEditPM(idx){
+  const p=_collectPMForm();
+  if(!p.eq){alert('Informe o nome do equipamento.');return;}
+  p.m=PLANO_PREV[idx].m; // keep existing status
+  Object.assign(PLANO_PREV[idx],p);
+  saveAll();
+  closeModal(); renderPreventivo(R('page-content'));
+}
+
+function removePM(idx){
+  if(!confirm(`Remover "${PLANO_PREV[idx].eq}" do plano preventivo?`))return;
+  PLANO_PREV.splice(idx,1);
+  saveAll();
+  renderPreventivo(R('page-content'));
+}
+
+// ══════════════════════════════════════════════
+//  ESTOQUE
+// ══════════════════════════════════════════════
+
+let estFilter = {busca:'', cat:'Todos', status:'Todos'};
+
+function renderEstoque(c){
+  const cats=['Todos',...new Set(ESTOQUE.map(e=>e.cat))];
+  const totalVal  = ESTOQUE.reduce((a,e)=>a+e.qtd*e.vlr,0);
+  const abaixo    = ESTOQUE.filter(e=>e.qtd<e.min);
+  const pontoPed  = ESTOQUE.filter(e=>e.qtd>=e.min&&e.qtd<=e.ped);
+  const okCount   = ESTOQUE.filter(e=>e.qtd>e.ped).length;
+
+  // ── Alert banner (somente se houver itens abaixo do mínimo) ──
+  const alertBanner = abaixo.length > 0 ? `
+    <div style="background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.35);
+      border-radius:12px;padding:16px 20px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="font-size:22px">🚨</span>
+        <div>
+          <div style="font-family:'Roboto Condensed',sans-serif;font-size:15px;font-weight:700;color:#ef4444">
+            Alerta de Estoque Mínimo — ${abaixo.length} ${abaixo.length===1?'item':'itens'} abaixo do mínimo
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">
+            Os itens abaixo atingiram ou ultrapassaram o limite mínimo definido. Providencie a reposição imediata.
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${abaixo.map(e=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;
+            background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);
+            border-radius:8px;padding:10px 14px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-family:'Roboto Condensed',sans-serif;font-size:12px;font-weight:700;color:#ef4444">${esc(e.cod)}</span>
+              <span style="font-size:13px;font-weight:500">${esc(e.desc)}</span>
+              <span style="font-size:11px;color:var(--muted)">${esc(e.cat)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;flex-shrink:0;">
+              <div style="text-align:center;">
+                <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Atual</div>
+                <div style="font-family:'Roboto Condensed',sans-serif;font-size:18px;font-weight:800;color:#ef4444;line-height:1.1">${e.qtd} <span style="font-size:11px;font-weight:400;color:var(--muted)">${esc(e.un)}</span></div>
+              </div>
+              <div style="width:1px;height:28px;background:rgba(239,68,68,.2)"></div>
+              <div style="text-align:center;">
+                <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Mínimo</div>
+                <div style="font-family:'Roboto Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--muted2);line-height:1.1">${e.min} <span style="font-size:11px;font-weight:400;color:var(--muted)">${esc(e.un)}</span></div>
+              </div>
+              <div style="width:1px;height:28px;background:rgba(239,68,68,.2)"></div>
+              <div style="text-align:center;">
+                <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Faltam</div>
+                <div style="font-family:'Roboto Condensed',sans-serif;font-size:18px;font-weight:800;color:#f59e0b;line-height:1.1">${e.min-e.qtd} <span style="font-size:11px;font-weight:400;color:var(--muted)">${esc(e.un)}</span></div>
+              </div>
+              <div style="width:1px;height:28px;background:rgba(239,68,68,.2)"></div>
+              <div style="text-align:right;">
+                <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Fornecedor</div>
+                <div style="font-size:12px;font-weight:500;color:var(--text);margin-top:2px">${esc(e.forn)||'—'}</div>
+                <div style="font-size:11px;color:var(--muted)">Lead time: ${e.lead} dias</div>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  c.innerHTML=`
+    ${alertBanner}
+    <div class="kpi-grid kpi-grid-4" style="margin-bottom:18px">
+      <div class="kpi-card"><div class="kpi-card-accent" style="background:#f97316"></div><div class="kpi-icon">📦</div><div class="kpi-val" style="color:#f97316">${ESTOQUE.length}</div><div class="kpi-label">Itens Cadastrados</div></div>
+      <div class="kpi-card"><div class="kpi-card-accent" style="background:#ef4444"></div><div class="kpi-icon">🚨</div><div class="kpi-val" style="color:#ef4444">${abaixo.length}</div><div class="kpi-label">Abaixo do Mínimo</div></div>
+      <div class="kpi-card"><div class="kpi-card-accent" style="background:#22c55e"></div><div class="kpi-icon">✅</div><div class="kpi-val" style="color:#22c55e">${okCount}</div><div class="kpi-label">Em Nível OK</div></div>
+      <div class="kpi-card"><div class="kpi-card-accent" style="background:#22c55e"></div><div class="kpi-icon">💰</div><div class="kpi-val" style="color:#22c55e;font-family:'Roboto Condensed',sans-serif;font-weight:800;font-size:20px">${fmtR(totalVal)}</div><div class="kpi-label">Valor Total</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📦 Almoxarifado de Manutenção</div>
+        <div class="controls">
+          <input class="inp inp-sm" placeholder="🔍 Buscar..." value="${esc(estFilter.busca)}" oninput="estFilter.busca=this.value;renderEstTable()" style="width:200px">
+          <select class="inp inp-sm" onchange="estFilter.cat=this.value;renderEstTable()">
+            ${cats.map(x=>`<option${estFilter.cat===x?' selected':''}>${x}</option>`).join('')}
+          </select>
+          <select class="inp inp-sm" onchange="estFilter.status=this.value;renderEstTable()">
+            <option value="Todos">Todos os status</option>
+            <option value="Abaixo do Mínimo">🔴 Abaixo do Mínimo</option>
+            <option value="OK">🟢 OK</option>
+          </select>
+          ${isAdmin()?'<button class="btn btn-primary btn-sm" onclick="openNovoItem()">➕ Novo Item</button>':''}
+        </div>
+      </div>
+      <div class="table-wrap" id="est-table-wrap"></div>
+    </div>`;
+  if(!estFilter.status) estFilter.status='Todos';
+  renderEstTable();
+}
+
+function renderEstTable(){
+  const b=estFilter.busca.toLowerCase();
+  const f=ESTOQUE.filter(e=>{
+    const s=(e.cod+e.desc).toLowerCase().includes(b);
+    const c=estFilter.cat==='Todos'||e.cat===estFilter.cat;
+    const st=!estFilter.status||estFilter.status==='Todos'||e.st===estFilter.status;
+    return s&&c&&st;
+  });
+  if(!f.length){R('est-table-wrap').innerHTML='<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">Nenhum item encontrado</div></div>';return;}
+
+  const rows=f.map(e=>{
+    const alerta = e.qtd < e.min;
+    const trCls  = alerta ? 'est-row-alerta' : '';
+    const qtdCls = alerta ? 'est-num est-alerta' : 'est-num';
+    const minCls = alerta ? 'est-num-sm est-alerta' : 'est-num-sm est-muted';
+    return `<tr class="${trCls}">
+      <td class="est-cod">${esc(e.cod)}</td>
+      <td class="est-desc">${esc(e.desc)}${alerta?'<span class="est-tag-min">⚠ MÍNIMO</span>':''}</td>
+      <td class="est-text">${esc(e.cat)}</td>
+      <td class="est-muted">${esc(e.un)}</td>
+      <td class="${qtdCls}">${e.qtd}</td>
+      <td class="${minCls}">${e.min}</td>
+      <td class="est-num-sm est-muted">${e.ped}</td>
+      <td class="est-money">${fmtR(e.vlr)}</td>
+      <td class="est-money est-bold">${fmtR(e.qtd*e.vlr)}</td>
+      <td class="est-text">${esc(e.forn)}</td>
+      <td class="est-num-sm est-muted">${e.lead}d</td>
+      <td>${badge(e.st,estColor(e.st))}</td>
+      ${isAdmin()?`<td class="est-actions"><button class="btn btn-secondary btn-sm" onclick="openEditItem(${ESTOQUE.indexOf(e)})">✏️ Editar</button></td>`:'<td></td>'}
+    </tr>`;
+  }).join('');
+
+  R('est-table-wrap').innerHTML=`<table>
+    <thead><tr>
+      <th>Código</th><th>Descrição</th><th>Categoria</th><th>Un.</th>
+      <th>Qtd. Atual</th><th>Qtd. Mín.</th><th>Pto. Pedido</th>
+      <th>Vlr. Unit.</th><th>Vlr. Total</th><th>Fornecedor</th><th>Lead Time</th><th>Status</th><th>Ações</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+  setTimeout(applyDualScroll, 30);
+}
+
+// ══════════════════════════════════════════════
+//  ESTOQUE CRUD
+// ══════════════════════════════════════════════
+
+function itemFormHTML(e){
+  return `<div class="form-grid">
+    <div class="fg"><label>Código *</label><input class="inp" id="it-cod" value="${esc(e?e.cod:'')}" placeholder="Ex: MAT-016"></div>
+    <div class="fg"><label>Descrição *</label><input class="inp" id="it-desc" value="${esc(e?e.desc:'')}" placeholder="Ex: Rolamento 6205-2RS"></div>
+    <div class="fg"><label>Categoria</label><input class="inp" id="it-cat" value="${esc(e?e.cat:'')}" placeholder="Ex: Rolamentos, Filtros..."></div>
+    <div class="fg"><label>Unidade de Medida</label><input class="inp" id="it-un" value="${esc(e?e.un:'Pç')}" placeholder="Pç, m, L, Kg, m²..."></div>
+    <div class="fg"><label>Fornecedor</label><input class="inp" id="it-forn" value="${esc(e?e.forn:'')}" placeholder="Ex: NSK Brasil"></div>
+    <div class="fg"><label>Lead Time (dias)</label><input class="inp" type="number" id="it-lead" value="${e?e.lead:7}" min="1"></div>
+    <div class="fg"><label>Valor Unitário (R$)</label><input class="inp" type="number" step="0.01" id="it-vlr" value="${e?e.vlr:0}" min="0" oninput="calcStatusEst()"></div>
+    <div class="fg"><label>Qtd. Máxima</label><input class="inp" type="number" id="it-max" value="${e?e.max:0}" min="0"></div>
+    <div class="fg"><label>Qtd. Atual *</label><input class="inp" type="number" id="it-qtd" value="${e?e.qtd:0}" min="0" oninput="calcStatusEst()"></div>
+    <div class="fg"><label>Qtd. Mínima</label><input class="inp" type="number" id="it-min" value="${e?e.min:0}" min="0" oninput="calcStatusEst()"></div>
+    <div class="fg"><label>Ponto de Pedido</label><input class="inp" type="number" id="it-ped" value="${e?e.ped:0}" min="0" oninput="calcStatusEst()"></div>
+    <div class="fg"><label>Status (automático)</label>
+      <div id="it-st-preview" style="padding:9px 13px;border-radius:var(--r2);font-size:13px;font-weight:600;background:var(--surface2);border:1.5px solid var(--border)">—</div>
+      <input type="hidden" id="it-st" value="${e?e.st:'OK'}">
+    </div>
+  </div>
+  <div style="margin-top:14px;padding:12px 14px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);border:1px solid var(--border)">
+    💡 O <strong>Status</strong> é calculado automaticamente: se Qtd. Atual ≤ Ponto de Pedido → <span style="color:#f59e0b">Ponto de Pedido</span> · se Qtd. Atual &lt; Qtd. Mínima → <span style="color:#ef4444">Abaixo do Mínimo</span> · caso contrário → <span style="color:#22c55e">OK</span>
+  </div>`;
+}
+
+function calcStatusEst(){
+  const qtd=parseInt(R('it-qtd')?.value)||0;
+  const min=parseInt(R('it-min')?.value)||0;
+  const ped=parseInt(R('it-ped')?.value)||0;
+  let st='OK', color='#22c55e';
+  if(qtd<min){ st='Abaixo do Mínimo'; color='#ef4444'; }
+  else if(qtd<=ped){ st='Ponto de Pedido'; color='#f59e0b'; }
+  const prev=R('it-st-preview');
+  const inp=R('it-st');
+  if(prev){ prev.textContent=st; prev.style.color=color; prev.style.borderColor=color+'55'; }
+  if(inp) inp.value=st;
+}
+
+function openNovoItem(){
+  showModal(`<div class="modal-title">➕ Novo Item de Estoque</div>
+    ${itemFormHTML(null)}
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNovoItem()">✅ Cadastrar</button>
+    </div>`);
+  setTimeout(calcStatusEst, 50);
+}
+
+function openEditItem(idx){
+  window._mCtx = {type:'item', id:null, idx:idx};
+  const e=ESTOQUE[idx];
+  window.DEL = {
+    label: e.cod + ' — ' + e.desc,
+    fn: function(){ ESTOQUE.splice(idx,1); saveAll(); _closeModalSilent(); renderEstoque(R('page-content')); }
+  };
+  showModal(`<div class="modal-title">✏️ Editar Item — ${esc(e.cod)}</div>
+    ${itemFormHTML(e)}
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" onclick="deleteFromModal()">🗑️ Apagar</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEditItem(${idx})">💾 Salvar</button>
+      </div>
+    </div>`);
+  setTimeout(calcStatusEst, 50);
+}
+
+function _collectItemForm(){
+  const qtd=parseInt(R('it-qtd').value)||0;
+  const min=parseInt(R('it-min').value)||0;
+  const ped=parseInt(R('it-ped').value)||0;
+  let st='OK';
+  if(qtd<min) st='Abaixo do Mínimo';
+  else if(qtd<=ped) st='Ponto de Pedido';
+  return {
+    cod:R('it-cod').value.trim(), desc:R('it-desc').value.trim(),
+    cat:R('it-cat').value.trim(), un:R('it-un').value.trim(),
+    qtd, min, max:parseInt(R('it-max').value)||0, ped,
+    vlr:parseFloat(R('it-vlr').value)||0,
+    forn:R('it-forn').value.trim(), lead:parseInt(R('it-lead').value)||7, st
+  };
+}
+
+function saveNovoItem(){
+  const e=_collectItemForm();
+  if(!e.cod||!e.desc){alert('Código e Descrição são obrigatórios.');return;}
+  ESTOQUE.push(e);
+  saveAll(); closeModal(); renderEstoque(R('page-content'));
+}
+
+function saveEditItem(idx){
+  const e=_collectItemForm();
+  if(!e.cod||!e.desc){alert('Código e Descrição são obrigatórios.');return;}
+  Object.assign(ESTOQUE[idx],e);
+  saveAll(); closeModal(); renderEstoque(R('page-content'));
+}
+
+function removeItem(idx){
+  if(!confirm(`Remover item "${ESTOQUE[idx].cod} — ${ESTOQUE[idx].desc}"?`))return;
+  ESTOQUE.splice(idx,1);
+  saveAll();
+  renderEstoque(R('page-content'));
+}
+
+// ══════════════════════════════════════════════
+//  CUSTOS
+// ══════════════════════════════════════════════
+
+function renderCustos(c){
+  const sum = (f)=>CUSTOS_DATA.reduce((a,x)=>a+x[f],0);
+  const totalMO=sum('mo'),totalMat=sum('mat'),totalTerc=sum('terc'),totalOut=sum('outros'),totalG=sum('total'),totalOrc=sum('orc');
+
+  const kCards=[
+    {icon:'👷',l:'Mão de Obra',v:totalMO,c:'#f97316'},
+    {icon:'🔩',l:'Materiais',v:totalMat,c:'#3b82f6'},
+    {icon:'🏢',l:'Terceiros',v:totalTerc,c:'#8b5cf6'},
+    {icon:'💰',l:'Total Gasto',v:totalG,c:'#22c55e'},
+    {icon:'📊',l:'Orçamento Total',v:totalOrc,c:'#f59e0b'},
+  ].map(k=>`<div class="kpi-card"><div class="kpi-card-accent" style="background:${k.c}"></div><div class="kpi-icon">${k.icon}</div><div class="kpi-val" style="color:${k.c};font-family:'Roboto Condensed',sans-serif;font-weight:800;font-size:17px">${fmtR(k.v)}</div><div class="kpi-label">${k.l}</div></div>`).join('');
+
+  const rows=CUSTOS_DATA.map((x,i)=>`<tr>
+    <td><strong style="color:var(--accent)">${esc(x.os)}</strong></td>
+    <td>${esc(x.eq)}</td>
+    <td>${esc(x.area)}</td>
+    <td>${badge(x.tipo,'#6b7a9b')}</td>
+    <td>${fmtR(x.mo)}</td>
+    <td>${fmtR(x.mat)}</td>
+    <td>${fmtR(x.terc)}</td>
+    <td>${fmtR(x.outros)}</td>
+    <td><strong>${fmtR(x.total)}</strong></td>
+    <td>${fmtR(x.orc)}</td>
+    <td style="color:${x.total<=x.orc?'#22c55e':'#ef4444'};font-family:'Roboto Condensed',sans-serif;font-weight:700">${x.total<=x.orc?'+':''}${fmtR(x.orc-x.total)}</td>
+    <td>${badge(x.total<=x.orc?'Dentro':'Estourado',x.total<=x.orc?'#22c55e':'#ef4444')}</td>
+    ${isAdmin()?`<td><button class="btn btn-secondary btn-sm" onclick="openEditCusto(${i})">✏️ Editar</button></td>`:'<td></td>'}
+  </tr>`).join('');
+
+  c.innerHTML=`
+    <div class="kpi-grid kpi-grid-5" style="margin-bottom:18px">${kCards}</div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">💰 Controle de Custos por OS — 2025</div>
+        ${isAdmin()?'<button class="btn btn-primary btn-sm" onclick="openNovoCusto()">➕ Novo Custo</button>':''}
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Nº OS</th><th>Equipamento</th><th>Área</th><th>Tipo</th>
+            <th>Mão de Obra</th><th>Material</th><th>Terceiros</th><th>Outros</th>
+            <th>Total</th><th>Orçamento</th><th>Dif.</th><th>Status</th><th>Ações</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr>
+            <td colspan="4"><strong>TOTAIS</strong></td>
+            <td>${fmtR(totalMO)}</td>
+            <td>${fmtR(totalMat)}</td>
+            <td>${fmtR(totalTerc)}</td>
+            <td>${fmtR(totalOut)}</td>
+            <td style="color:var(--accent)">${fmtR(totalG)}</td>
+            <td>${fmtR(totalOrc)}</td>
+            <td style="color:#22c55e">+${fmtR(totalOrc-totalG)}</td>
+            <td></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  INDICADORES KPI
+// ══════════════════════════════════════════════
+
+function renderIndicadores(c){
+  // Indicadores editáveis pelo admin
+  if(!window._KPIS){
+    window._KPIS = [
+      {icon:'🛑',v:'42%',l:'OS Corretivas',meta:'Meta: ≤ 30%',ok:false},
+    {icon:'✅',v:'33%',l:'OS Preventivas',meta:'Meta: ≥ 40%',ok:false},
+    {icon:'📡',v:'17%',l:'OS Preditivas',meta:'Meta: ≥ 20%',ok:false},
+    {icon:'⚡',v:'93.5%',l:'Disponibilidade',meta:'Meta: ≥ 95%',ok:false},
+    {icon:'📋',v:'7',l:'Backlog OS',meta:'Meta: ≤ 15',ok:true},
+    {icon:'⏱️',v:'312h',l:'MTBF',meta:'Meta: ≥ 300h',ok:true},
+    {icon:'🔧',v:'3.8h',l:'MTTR',meta:'Meta: ≤ 4h',ok:true},
+    {icon:'📈',v:'96%',l:'Eficiência PCM',meta:'Meta: ≥ 90%',ok:true},
+    {icon:'💰',v:'4.3%',l:'Custo/Faturamento',meta:'Meta: ≤ 4%',ok:false},
+      {icon:'⚠️',v:'80%',l:'Aderência PM',meta:'Meta: ≥ 90%',ok:false},
+    ];
+  }
+  const kpis = window._KPIS;
+
+  const kCards=kpis.map(k=>`<div class="kpi-card">
+    <div class="kpi-card-accent" style="background:${k.ok?'#22c55e':'#ef4444'}"></div>
+    <div class="kpi-icon">${k.icon}</div>
+    <div class="kpi-val" style="color:${k.ok?'#22c55e':'#ef4444'};font-family:'Roboto Condensed',sans-serif;font-weight:800;font-size:22px">${k.v}</div>
+    <div class="kpi-label">${k.l}</div>
+    <div class="kpi-meta">${k.meta}</div>
+    <div style="margin-top:8px">${badge(k.ok?'✅ Meta OK':'⚠️ Abaixo', k.ok?'#22c55e':'#ef4444')}</div>
+  </div>`).join('');
+
+  const mRows=MENSAL.map(m=>`<tr>
+    <td><strong>${esc(m.mes)}</strong></td>
+    <td>${m.abertas}</td><td>${m.conc}</td>
+    <td style="font-family:'Roboto Condensed',sans-serif;font-weight:700;color:#ef4444">${m.corr}</td>
+    <td style="font-family:'Roboto Condensed',sans-serif;font-weight:700;color:#22c55e">${m.prev}</td>
+    <td style="font-family:'Roboto Condensed',sans-serif;font-weight:700;color:#3b82f6">${m.pred}</td>
+    <td>${m.hhp}h</td><td>${m.hhr}h</td>
+    <td>${badge(m.efic+'%',m.efic>=90?'#22c55e':'#f59e0b')}</td>
+    <td>${badge(m.disp+'%',m.disp>=95?'#22c55e':'#ef4444')}</td>
+    <td>${m.mtbf}h</td><td>${m.mttr}h</td>
+    <td style="font-family:'Roboto Condensed',sans-serif;font-weight:700;color:var(--accent)">${fmtR(m.custo)}</td>
+    <td>${badge(m.ader+'%',m.ader>=90?'#22c55e':'#f59e0b')}</td>
+  </tr>`).join('');
+
+  c.innerHTML=`
+    <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">${kCards}</div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">📊 Evolução Mensal dos Indicadores — 2025</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Mês</th><th>OS Abertas</th><th>OS Conc.</th>
+            <th>Corretivas</th><th>Preventivas</th><th>Preditivas</th>
+            <th>HH Prev.</th><th>HH Real</th><th>Efic. HH%</th><th>Disponib.%</th>
+            <th>MTBF(h)</th><th>MTTR(h)</th><th>Custo Total</th><th>Ader. PM%</th>
+          </tr></thead>
+          <tbody>${mRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  CUSTOS CRUD
+// ══════════════════════════════════════════════
+
+function custoFormHTML(x){
+  const tipoOpts=['Corretiva','Preventiva','Preditiva','Melhoria'].map(t=>`<option${x&&x.tipo===t?' selected':''}>${t}</option>`).join('');
+  return `<div class="form-grid">
+    <div class="fg"><label>Nº OS *</label><input class="inp" id="cu-os" value="${esc(x?x.os:'')}" placeholder="Ex: OS-2025-013"></div>
+    <div class="fg"><label>Equipamento</label><input class="inp" id="cu-eq" value="${esc(x?x.eq:'')}" placeholder="Ex: Compressor AR-01"></div>
+    <div class="fg"><label>Área</label><input class="inp" id="cu-area" value="${esc(x?x.area:'')}" placeholder="Ex: Utilidades"></div>
+    <div class="fg"><label>Tipo</label><select class="inp" id="cu-tipo">${tipoOpts}</select></div>
+    <div class="fg"><label>Mão de Obra (R$)</label><input class="inp" type="number" step="0.01" id="cu-mo" value="${x?x.mo:0}" min="0"></div>
+    <div class="fg"><label>Material (R$)</label><input class="inp" type="number" step="0.01" id="cu-mat" value="${x?x.mat:0}" min="0"></div>
+    <div class="fg"><label>Terceiros (R$)</label><input class="inp" type="number" step="0.01" id="cu-terc" value="${x?x.terc:0}" min="0"></div>
+    <div class="fg"><label>Outros (R$)</label><input class="inp" type="number" step="0.01" id="cu-outros" value="${x?x.outros:0}" min="0"></div>
+    <div class="fg"><label>Orçamento (R$)</label><input class="inp" type="number" step="0.01" id="cu-orc" value="${x?x.orc:0}" min="0"></div>
+  </div>`;
+}
+
+function _collectCustoForm(){
+  const mo=parseFloat(R('cu-mo').value)||0, mat=parseFloat(R('cu-mat').value)||0,
+    terc=parseFloat(R('cu-terc').value)||0, outros=parseFloat(R('cu-outros').value)||0;
+  return { os:R('cu-os').value.trim(), eq:R('cu-eq').value.trim(),
+    area:R('cu-area').value.trim(), tipo:R('cu-tipo').value,
+    mo, mat, terc, outros, total:mo+mat+terc+outros,
+    orc:parseFloat(R('cu-orc').value)||0 };
+}
+
+function openNovoCusto(){
+  showModal(`<div class="modal-title">➕ Novo Registro de Custo</div>
+    ${custoFormHTML(null)}
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNovoCusto()">✅ Registrar</button>
+    </div>`);
+}
+
+function openEditCusto(idx){
+  window._mCtx = {type:'custo', id:null, idx:idx};
+  const _cu = CUSTOS_DATA[idx];
+  window.DEL = {
+    label: _cu.os + ' — ' + _cu.eq,
+    fn: function(){ CUSTOS_DATA.splice(idx,1); saveAll(); _closeModalSilent(); renderCustos(R('page-content')); }
+  };
+  showModal(`<div class="modal-title">✏️ Editar Custo — ${esc(CUSTOS_DATA[idx].os)}</div>
+    ${custoFormHTML(CUSTOS_DATA[idx])}
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" onclick="deleteFromModal()">🗑️ Apagar</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEditCusto(${idx})">💾 Salvar</button>
+      </div>
+    </div>`);
+}
+
+function saveNovoCusto(){
+  const x=_collectCustoForm();
+  if(!x.os){alert('Nº da OS é obrigatório.');return;}
+  CUSTOS_DATA.push(x); saveAll(); closeModal(); renderCustos(R('page-content'));
+}
+
+function saveEditCusto(idx){
+  const x=_collectCustoForm();
+  if(!x.os){alert('Nº da OS é obrigatório.');return;}
+  Object.assign(CUSTOS_DATA[idx],x); saveAll(); closeModal(); renderCustos(R('page-content'));
+}
+
+function removeCusto(idx){
+  if(!confirm(`Remover registro de custo da ${CUSTOS_DATA[idx].os}?`))return;
+  CUSTOS_DATA.splice(idx,1); saveAll(); renderCustos(R('page-content'));
+}
+
+// ══════════════════════════════════════════════
+//  USUÁRIOS (somente superAdmin)
+// ══════════════════════════════════════════════
+
+function renderUsuarios(c){
+  if(!isSuperAdmin()){c.innerHTML='<div class="empty"><div class="empty-icon">🔒</div><div class="empty-text">Acesso restrito ao Administrador</div></div>';return;}
+  const rows = USERS.map((u,i)=>`<tr>
+    <td>${u.id}</td>
+    <td><strong>${esc(u.name)}</strong></td>
+    <td style="font-family:'Roboto Condensed',sans-serif;font-size:13px;font-weight:600;color:var(--muted)">${esc(u.username)}</td>
+    <td>${'•'.repeat(u.password.length)}</td>
+    <td><span class="badge role-${u.role}">${roleName(u.role)}</span></td>
+    <td>${esc(u.area)}</td>
+    <td>
+      <button class="btn btn-secondary btn-sm" onclick="openEditUser(${i})">✏️ Editar</button>
+    </td>
+  </tr>`).join('');
+
+  c.innerHTML=`
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">👥 Gerenciamento de Usuários</div>
+        <button class="btn btn-primary btn-sm" onclick="openNovoUser()">➕ Novo Usuário</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Nome</th><th>Usuário</th><th>Senha</th><th>Perfil</th><th>Área/Setor</th><th>Ações</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px">
+      <div class="card-header"><div class="card-title">🔑 Níveis de Acesso</div></div>
+      <div class="card-body">
+        ${[
+          {role:'administrador',color:'#ef4444',label:'Administrador',desc:'Acesso total: todas as telas, CRUD completo, gerencia usuários, dashboard, OS, equipamentos, plano preventivo, estoque, custos e indicadores.'},
+          {role:'lider',color:'#f97316',label:'Líder',desc:'Acesso a todas as telas exceto gerenciamento de usuários. Pode criar e editar OS, visualizar custos e indicadores.'},
+          {role:'tecnico',color:'#3b82f6',label:'Técnico',desc:'Visualiza dashboard, OS, equipamentos, plano preventivo e estoque. Pode dar OK e comentar nas OS.'},
+          {role:'auxiliar',color:'#8b5cf6',label:'Auxiliar',desc:'Igual ao técnico: visualização geral, OK e comentários nas OS.'},
+        ].map(r=>`<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+          <span class="badge role-${r.role}" style="flex-shrink:0;margin-top:2px">${r.label}</span>
+          <span style="font-size:13px;color:var(--muted2)">${r.desc}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function userFormHTML(u){
+  const roleOpts=['administrador','lider','tecnico','auxiliar'].map(r=>`<option value="${r}"${u&&u.role===r?' selected':''}>${roleName(r)}</option>`).join('');
+  return `<div class="form-grid">
+    <div class="fg full"><label>Nome Completo *</label><input class="inp inp-full" id="usr-name" value="${esc(u?u.name:'')}" placeholder="Nome do usuário"></div>
+    <div class="fg"><label>Login (usuário) *</label><input class="inp" id="usr-login" value="${esc(u?u.username:'')}" placeholder="Ex: joao.silva" ${u&&u.username==='admin'?'readonly':''}></div>
+    <div class="fg"><label>Senha *</label><input class="inp" id="usr-pass" value="${esc(u?u.password:'')}" placeholder="Mínimo 4 caracteres"></div>
+    <div class="fg"><label>Perfil de Acesso</label><select class="inp" id="usr-role">${roleOpts}</select></div>
+    <div class="fg"><label>Área/Setor</label><input class="inp" id="usr-area" value="${esc(u?u.area:'')}" placeholder="Ex: Mecânica"></div>
+  </div>`;
+}
+
+function openNovoUser(){
+  showModal(`<div class="modal-title">➕ Novo Usuário</div>
+    ${userFormHTML(null)}
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNovoUser()">✅ Criar Usuário</button>
+    </div>`);
+}
+
+function openEditUser(idx){
+  window._mCtx = {type:'user', id:null, idx:idx};
+  const _us = USERS[idx];
+  window.DEL = (_us.username==='admin') ? null : {
+    label: _us.name + ' (' + _us.username + ')',
+    fn: function(){ USERS.splice(idx,1); saveAll(); _closeModalSilent(); renderUsuarios(R('page-content')); }
+  };
+  showModal(`<div class="modal-title">✏️ Editar Usuário — ${esc(USERS[idx].name)}</div>
+    ${userFormHTML(USERS[idx])}
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" onclick="deleteFromModal()">🗑️ Apagar</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEditUser(${idx})">💾 Salvar</button>
+      </div>
+    </div>`);
+}
+
+function _collectUserForm(){
+  return { name:R('usr-name').value.trim(), username:R('usr-login').value.trim().toLowerCase(),
+    password:R('usr-pass').value.trim(), role:R('usr-role').value, area:R('usr-area').value.trim() };
+}
+
+function saveNovoUser(){
+  const u=_collectUserForm();
+  if(!u.name||!u.username||!u.password){alert('Nome, usuário e senha são obrigatórios.');return;}
+  if(USERS.find(x=>x.username===u.username)){alert('Este nome de usuário já existe.');return;}
+  u.id=Math.max(...USERS.map(x=>x.id))+1;
+  USERS.push(u); saveAll(); closeModal(); renderUsuarios(R('page-content'));
+}
+
+function saveEditUser(idx){
+  const u=_collectUserForm();
+  if(!u.name||!u.username||!u.password){alert('Nome, usuário e senha são obrigatórios.');return;}
+  const conflict=USERS.find((x,i)=>x.username===u.username&&i!==idx);
+  if(conflict){alert('Este nome de usuário já existe.');return;}
+  Object.assign(USERS[idx],u);
+  saveAll();
+  if(currentUser&&currentUser.id===USERS[idx].id) currentUser=USERS[idx];
+  closeModal(); renderUsuarios(R('page-content'));
+}
+
+function removeUser(idx){
+  if(USERS[idx].username==='admin'){alert('O usuário admin não pode ser removido.');return;}
+  if(!confirm(`Remover usuário "${USERS[idx].name}"?`))return;
+  USERS.splice(idx,1); saveAll(); renderUsuarios(R('page-content'));
+}
+
+// ══════════════════════════════════════════════
+//  DUAL SCROLL (scrollbar topo + fundo)
+// ══════════════════════════════════════════════
+
+function applyDualScroll(){
+  document.querySelectorAll('.table-wrap').forEach(wrap => {
+    if(wrap.dataset.dualDone) return;
+    wrap.dataset.dualDone = '1';
+
+    // Barra espelho no topo — injeta logo ANTES da .table-wrap, sem gap
+    const mirror = document.createElement('div');
+    mirror.style.cssText = [
+      'overflow-x:auto',
+      'overflow-y:hidden',
+      'height:10px',
+      'background:var(--surface2)',
+      'border-bottom:1px solid var(--border)',
+      'margin:0',
+      'padding:0',
+      'line-height:0',
+      'font-size:0',
+    ].join(';');
+
+    const mirrorInner = document.createElement('div');
+    mirrorInner.style.cssText = 'height:1px;display:block;';
+    mirror.appendChild(mirrorInner);
+
+    // Estilo da scrollbar do espelho via classe dinâmica
+    if(!document.getElementById('mirror-sb-style')){
+      const s = document.createElement('style');
+      s.id = 'mirror-sb-style';
+      s.textContent = `
+        .tbl-mirror::-webkit-scrollbar{height:10px;}
+        .tbl-mirror::-webkit-scrollbar-track{background:var(--surface2);}
+        .tbl-mirror::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+        .tbl-mirror::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+      `;
+      document.head.appendChild(s);
+    }
+    mirror.classList.add('tbl-mirror');
+
+    // Insere espelho imediatamente antes da tabela — sem wrapper, sem gap
+    wrap.parentNode.insertBefore(mirror, wrap);
+
+    // Remove margin/padding do wrap para colar
+    wrap.style.marginTop = '0';
+    wrap.style.paddingTop = '0';
+
+    // Sincroniza largura
+    function syncW(){
+      mirrorInner.style.width = wrap.scrollWidth + 'px';
+    }
+    syncW();
+
+    // Sincroniza scroll bidirecional
+    let L = false, R_ = false;
+    mirror.addEventListener('scroll', () => {
+      if(R_) return; L = true;
+      wrap.scrollLeft = mirror.scrollLeft;
+      L = false;
+    });
+    wrap.addEventListener('scroll', () => {
+      if(L) return; R_ = true;
+      mirror.scrollLeft = wrap.scrollLeft;
+      R_ = false;
+    });
+
+    new ResizeObserver(syncW).observe(wrap);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  DELETE FROM MODAL HELPERS
+//  Usa window._mCtx para evitar problemas com
+//  aspas em template literals aninhados
+// ══════════════════════════════════════════════
+
+// Chamado pelo botão Apagar dentro de cada modal de edição
+function deleteFromModal(){
+  if(!window.DEL){ return; }
+  // Mostra o overlay de confirmação próprio
+  const ov = document.getElementById('confirm-overlay');
+  const lbl = document.getElementById('confirm-label');
+  if(!ov || !lbl) return;
+  lbl.textContent = window.DEL.label;
+  ov.style.display = 'flex';
+}
+
+function confirmDelete(sim){
+  const ov = document.getElementById('confirm-overlay');
+  if(ov) ov.style.display = 'none';
+  if(!sim){ return; } // Não — volta sem fazer nada
+  if(!window.DEL) return;
+  const fn = window.DEL.fn;
+  window.DEL = null;
+  fn(); // Executa a exclusão
+}
+
+function _closeModalSilent(){
+  const ov = R('modal-overlay');
+  const mb = R('modal-box');
+  if(ov) ov.classList.add('hide');
+  if(mb) mb.innerHTML = '';
+  document.body.style.overflow = '';
+  window._mCtx = null;
+}
+
+function showModal(html){
+  R('modal-box').innerHTML = html;
+  R('modal-overlay').classList.remove('hide');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(){
+  R('modal-overlay').classList.add('hide');
+  R('modal-box').innerHTML = '';
+  document.body.style.overflow = '';
+  window._mCtx = null;
+  if(currentPage==='os') renderOSTable();
+  if(currentPage==='equipamentos') renderEqTable();
+  if(currentPage==='estoque') renderEstTable();
+}
+
+function closeModalOutside(e){
+  if(e.target === R('modal-overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape') closeModal();
+});
+</script>
+</body>
+</html>
